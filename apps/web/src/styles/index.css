@@ -2,38 +2,63 @@
 
 /*
  * Design tokens. Components use these names (bg-canvas, text-ink-muted,
- * border-line, ...) instead of raw colours, so light and dark mode stay in sync.
+ * border-line, ...) instead of raw colours. `light-dark()` picks the light or
+ * dark value from the system theme; every grey is the ink colour at some
+ * strength, so greys stay neutral and borders stay quiet on any surface.
  */
 @theme {
-  --color-canvas: oklch(1 0 0);
-  --color-sidebar: oklch(0.984 0.002 265);
-  --color-surface-hover: oklch(0.972 0.003 265);
-  --color-surface-muted: oklch(0.955 0.004 265);
-  --color-line: oklch(0.925 0.005 265);
-  --color-ink: oklch(0.235 0.015 265);
-  --color-ink-muted: oklch(0.49 0.015 265);
-  --color-ink-subtle: oklch(0.6 0.013 265);
-  --color-accent: oklch(0.53 0.2 275);
-  --color-accent-soft: oklch(0.955 0.025 275);
-}
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --color-canvas: oklch(0.185 0.006 265);
-    --color-sidebar: oklch(0.165 0.006 265);
-    --color-surface-hover: oklch(0.225 0.007 265);
-    --color-surface-muted: oklch(0.255 0.008 265);
-    --color-line: oklch(0.275 0.008 265);
-    --color-ink: oklch(0.945 0.004 265);
-    --color-ink-muted: oklch(0.72 0.01 265);
-    --color-ink-subtle: oklch(0.6 0.01 265);
-    --color-accent: oklch(0.7 0.15 275);
-    --color-accent-soft: oklch(0.3 0.06 275);
-  }
+  /* UI text is 13px, reading text 14px. */
+  --text-xs: 0.75rem;
+  --text-xs--line-height: 1rem;
+  --text-sm: 0.8125rem;
+  --text-sm--line-height: 1.25rem;
+  --text-base: 0.875rem;
+  --text-base--line-height: 1.375rem;
+  --tracking-tight: -0.015em;
+
+  /* Surfaces: the page, the sidebar and popups. */
+  --color-canvas: light-dark(#fcfcfc, #181818);
+  --color-sidebar: light-dark(#f3f3f3, #141414);
+  --color-popover: light-dark(#ffffff, #1f1f1f);
+  --color-surface-subtle: light-dark(#f6f6f6, #1d1d1d);
+
+  /* Ink and its tints: text, fills and hairlines. */
+  --color-ink: light-dark(#141414, #f0f0f0);
+  --color-ink-muted: color-mix(in srgb, var(--color-ink) 72%, transparent);
+  --color-ink-subtle: color-mix(in srgb, var(--color-ink) 60%, transparent);
+  --color-surface-hover: color-mix(in srgb, var(--color-ink) 4.5%, transparent);
+  --color-surface-muted: color-mix(in srgb, var(--color-ink) 8%, transparent);
+  --color-line: color-mix(in srgb, var(--color-ink) 10%, transparent);
+  --color-line-subtle: color-mix(in srgb, var(--color-ink) 6%, transparent);
+
+  /* The one accent, Support Desk's cobalt: focus rings, selection, primary buttons. */
+  --color-accent: light-dark(#2645d4, #8fa2ff);
+  --color-accent-soft: color-mix(in srgb, var(--color-accent) 10%, transparent);
+  --color-primary: light-dark(#2645d4, #3b5bdb);
+
+  /* Meaning: status chips and glyphs, urgent priority, errors. Never decoration. */
+  --color-status-open: var(--color-ink-subtle);
+  --color-status-in-progress: light-dark(#8b5700, #f1b467);
+  --color-status-blocked: light-dark(#be1744, #fc6b83);
+  --color-status-resolved: light-dark(#007041, #70b489);
+  --color-status-closed: var(--color-ink-subtle);
+  --color-priority-urgent: light-dark(#cd4500, #f0874a);
+  --color-danger: var(--color-status-blocked);
+  --color-danger-soft: color-mix(in srgb, var(--color-danger) 10%, transparent);
+
+  /* The only elevation: popups float on one soft shadow. */
+  --shadow-popover: 0 8px 24px -6px light-dark(rgb(20 20 20 / 0.14), rgb(0 0 0 / 0.5));
 }
 
 @layer base {
+  :root {
+    color-scheme: light dark;
+  }
+
   body {
-    @apply bg-canvas text-sm text-ink antialiased;
+    @apply bg-canvas font-sans text-sm text-ink antialiased;
+    font-optical-sizing: auto;
   }
 }
