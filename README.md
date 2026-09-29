@@ -33,7 +33,7 @@ Checkout and Mobile App but not Internal Tools.
 ## Architecture
 
 ```
-apps/web         React 19 · Vite · Tailwind CSS · TanStack Query · React Router
+apps/web         React 19 · Vite · Tailwind CSS · Base UI · TanStack Query · React Router
    │  fetch /api  (Vite proxies to the API in dev)
    ▼
 apps/api         Hono: routes → services → repositories
@@ -48,7 +48,8 @@ packages/shared  zod schemas and types, imported by both apps
   Hidden and missing projects return the same 404. Errors always look like
   `{ "error": { "code": "...", "message": "..." } }`.
 - **Web**: a typed fetch client validates every response with the shared schemas.
-  List state (like the page) lives in the URL.
+  List state (like the page) lives in the URL. The design-system primitives live in
+  `apps/web/src/components/ui`; run `npm run dev` and open `/dev/ui` to see them all.
 
 See [`AGENTS.md`](AGENTS.md) for conventions and [`docs/features`](docs/features) for
 the live-session tickets.

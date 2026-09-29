@@ -44,7 +44,9 @@ apps/api/src/
 apps/web/src/
   api/                   client.ts (typed fetch), queries.ts (TanStack Query hooks)
   features/<name>/       pages and components for one feature
-  components/            shared UI: Layout, Sidebar, EmptyState, ErrorState, Pagination, Avatar, Button
+  components/            the app shell: Layout, Sidebar, SidebarSection, TopBar, Breadcrumbs, PageHeader, Panel, Pagination
+  components/ui/         design-system primitives: Button, Select, Combobox, Menu, Dialog, Toast, Table, ... (popups on Base UI)
+  dev/                   the UI kit page at /dev/ui, every primitive in one place (development only)
   styles/index.css       Tailwind entry and design tokens
 ```
 
@@ -68,12 +70,14 @@ apps/web/src/
 - zod at every edge: request input, environment variables, API responses, URL state.
   Put schemas shared by API and web in `packages/shared`.
 - Names: `kebab-case.ts` for modules and hooks, `PascalCase.tsx` for components,
-  `<module>.<layer>.ts` in the API. One component per file.
+  `<module>.<layer>.ts` in the API. One component per file; a `components/ui/` file
+  exports the parts of one primitive (`Select`, `SelectTrigger`, `SelectItem`).
 - Small functions, early returns, descriptive names. No commented-out code.
 - Tests live next to the code as `*.test.ts(x)`. API tests use `createTestApp()`,
   which seeds an in-memory database with fixed dates.
-- UI: reuse the tokens (`bg-canvas`, `text-ink-muted`, `border-line`) and shared
-  components; every data view needs loading, error and empty states, in light and dark.
+- UI: reuse the tokens (`bg-canvas`, `text-ink-muted`, `border-line`) and the primitives in
+  `components/ui/` (all of them are on http://localhost:5173/dev/ui); every data view needs
+  loading, error and empty states, in light and dark.
 - **Do not add dependencies without asking.** The `overrides` entry in `package.json`
   patches an old esbuild that drizzle-kit pulls in; leave it alone.
 - Format with Biome (`npm run format`). `npm run check` must pass before you hand off.

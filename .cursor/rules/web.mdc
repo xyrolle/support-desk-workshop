@@ -8,8 +8,9 @@ alwaysApply: false
 
 - Server data: add a method to `api` in `api/client.ts` (it parses the response with a shared zod schema) and a hook in `api/queries.ts`. Components never call `fetch`.
 - List state (page, filters, search) lives in the URL via `features/tickets/use-ticket-list-query.ts`, parsed with the shared `ticketListQuerySchema`.
-- Every data view handles loading (`Skeleton`), error (`ErrorState` with "Try again") and empty (`EmptyState`) states.
-- Style with Tailwind and the tokens from `styles/index.css`: `bg-canvas`, `bg-surface-hover`, `text-ink`, `text-ink-muted`, `border-line`, `text-accent`. Palette colours only for status and avatars, always with a `dark:` variant.
-- Reuse `Button`, `EmptyState`, `ErrorState`, `Pagination`, `Avatar`, `StatusBadge`, `PriorityIcon` and the labels in `features/tickets/ticket-labels.ts`. Icons come from `lucide-react`.
-- One component per file (`PascalCase.tsx`); hooks and helpers are `kebab-case.ts`. Imports use explicit `.ts`/`.tsx` extensions.
+- Every data view sits in a `Panel` and handles loading (`Skeleton`), error (`ErrorState` with "Try again") and empty (`EmptyState`) states.
+- Style with Tailwind and the tokens from `styles/index.css`: `bg-canvas`, `bg-surface-hover`, `text-ink`, `text-ink-muted`, `text-ink-subtle`, `border-line`, `text-accent`. UI text is 13px (`text-sm`). Greys are ink at a strength, never a new hex. Colour carries meaning only: status chips and glyphs, urgent priority, errors, avatars.
+- Build screens from `components/ui/` (Button, Input, Select, Combobox, Menu, Popover, Dialog, Toast, Tabs, Tooltip, Table, Checkbox, SelectionBar, StatusBadge, StatusIcon, PriorityIcon, Avatar, AvatarStack, Badge, Kbd) and the shell in `components/` (TopBar, Breadcrumbs, PageHeader, Panel, SidebarSection). See them all at `/dev/ui`. Popups come from Base UI through these wrappers; never hand-roll a popup, focus trap or outside-click handler.
+- Ticket labels live in `features/tickets/ticket-labels.ts`. Icons come from `lucide-react`.
+- One component per file (`PascalCase.tsx`); a `components/ui/` file exports the parts of one primitive (`Select`, `SelectTrigger`, `SelectItem`). Hooks and helpers are `kebab-case.ts`. Imports use explicit `.ts`/`.tsx` extensions.
 - Check the result in both light and dark mode at 1440×900.
