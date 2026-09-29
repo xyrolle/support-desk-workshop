@@ -1,0 +1,156 @@
+import type { SeedTicket } from "./seed-ticket.ts";
+
+export const internalToolsTickets: SeedTicket[] = [
+  {
+    id: "INT-301",
+    title: "Refund tool times out for orders with 50+ items",
+    description:
+      "The admin refund page times out when an order has many line items. Send the refunds in batches and show progress to the agent.",
+    status: "in_progress",
+    priority: "high",
+    assigneeId: "tomas-silva",
+    createdDaysAgo: 5,
+    updatedHoursAgo: 6,
+  },
+  {
+    id: "INT-302",
+    title: "Keep an audit log of manual order edits",
+    description:
+      "Support agents can change shipping addresses in the admin panel, but there is no record of who changed what. Log every edit with the agent and the before and after values.",
+    status: "open",
+    priority: "high",
+    assigneeId: "priya-nair",
+    createdDaysAgo: 15,
+    updatedHoursAgo: 48,
+  },
+  {
+    id: "INT-303",
+    title: "Customer search is case-sensitive",
+    description: "Searching for smith@example.com does not find Smith@example.com.",
+    status: "closed",
+    priority: "medium",
+    assigneeId: "hana-kim",
+    createdDaysAgo: 30,
+    updatedHoursAgo: 576,
+  },
+  {
+    id: "INT-304",
+    title: "Export orders to CSV for finance",
+    description:
+      "Finance copies orders into a spreadsheet by hand every month. Add a CSV export with a date range, totals and the tax breakdown.",
+    status: "open",
+    priority: "medium",
+    assigneeId: null,
+    createdDaysAgo: 20,
+    updatedHoursAgo: 168,
+  },
+  {
+    id: "INT-305",
+    title: "Single sign-on for the admin panel",
+    description:
+      "Replace the shared admin passwords with Google Workspace SSO and keep one break-glass account for emergencies. Waiting for IT to create the OAuth client.",
+    status: "blocked",
+    priority: "urgent",
+    assigneeId: "tomas-silva",
+    createdDaysAgo: 25,
+    updatedHoursAgo: 72,
+  },
+  {
+    id: "INT-306",
+    title: "Inventory sync job fails silently",
+    description:
+      "The nightly inventory sync failed three times this month without alerting anyone. Page the on-call engineer when it fails.",
+    status: "in_progress",
+    priority: "high",
+    assigneeId: "hana-kim",
+    createdDaysAgo: 4,
+    updatedHoursAgo: 3,
+  },
+  {
+    id: "INT-307",
+    title: "Assign several support tickets at once",
+    description:
+      "Team leads want to select multiple tickets and assign them in one go during Monday triage.",
+    status: "open",
+    priority: "low",
+    assigneeId: "priya-nair",
+    createdDaysAgo: 35,
+    updatedHoursAgo: 288,
+  },
+  {
+    id: "INT-308",
+    title: "Admin dashboard is slow on Monday mornings",
+    description:
+      "The revenue widget recalculates a full week of orders on every page load. Cache the aggregates and refresh them hourly.",
+    status: "closed",
+    priority: "medium",
+    assigneeId: "tomas-silva",
+    createdDaysAgo: 19,
+    updatedHoursAgo: 336,
+  },
+  {
+    id: "INT-309",
+    title: "Feature flag page shows stale values",
+    description:
+      "After toggling a flag in the admin panel, the page keeps showing the old value until it is reloaded.",
+    status: "open",
+    priority: "medium",
+    assigneeId: null,
+    createdDaysAgo: 9,
+    updatedHoursAgo: 50,
+  },
+  {
+    id: "INT-310",
+    title: "Remove admin access when employees leave",
+    description:
+      "People who have left the company keep admin access until someone removes it by hand. Sync with the HR system every day.",
+    status: "in_progress",
+    priority: "urgent",
+    assigneeId: "priya-nair",
+    createdDaysAgo: 7,
+    updatedHoursAgo: 24,
+  },
+  {
+    id: "INT-311",
+    title: "Dark theme for the admin panel",
+    description: "Support agents on the late shift asked for a dark theme.",
+    status: "open",
+    priority: "low",
+    assigneeId: "hana-kim",
+    createdDaysAgo: 60,
+    updatedHoursAgo: 720,
+  },
+  {
+    id: "INT-312",
+    title: "Replace free-text refund reasons with a fixed list",
+    description:
+      "Finance cannot report on why we refund because the reason is free text. Offer a fixed list of reasons with an optional note.",
+    status: "closed",
+    priority: "low",
+    assigneeId: "tomas-silva",
+    createdDaysAgo: 42,
+    updatedHoursAgo: 840,
+  },
+  {
+    id: "INT-313",
+    title: "Shipping label queue gets stuck after a printer jam",
+    description:
+      "Warehouse staff restart the print service by hand when labels get stuck after a jam. Blocked until the warehouse sends logs from the print server.",
+    status: "blocked",
+    priority: "high",
+    assigneeId: "tomas-silva",
+    createdDaysAgo: 6,
+    updatedHoursAgo: 20,
+  },
+  {
+    id: "INT-314",
+    title: "Let support view the app as a customer, with consent",
+    description:
+      "Support wants to see exactly what a customer sees. This needs the customer's consent and an audit trail, and a security review before any work starts.",
+    status: "open",
+    priority: "medium",
+    assigneeId: null,
+    createdDaysAgo: 12,
+    updatedHoursAgo: 120,
+  },
+];
