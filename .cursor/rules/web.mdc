@@ -1,0 +1,15 @@
+---
+description: Conventions for the React web app in apps/web
+globs: apps/web/**
+alwaysApply: false
+---
+
+# Web conventions
+
+- Server data: add a method to `api` in `api/client.ts` (it parses the response with a shared zod schema) and a hook in `api/queries.ts`. Components never call `fetch`.
+- List state (page, filters, search) lives in the URL via `features/tickets/use-ticket-list-query.ts`, parsed with the shared `ticketListQuerySchema`.
+- Every data view handles loading (`Skeleton`), error (`ErrorState` with "Try again") and empty (`EmptyState`) states.
+- Style with Tailwind and the tokens from `styles/index.css`: `bg-canvas`, `bg-surface-hover`, `text-ink`, `text-ink-muted`, `border-line`, `text-accent`. Palette colours only for status and avatars, always with a `dark:` variant.
+- Reuse `Button`, `EmptyState`, `ErrorState`, `Pagination`, `Avatar`, `StatusBadge`, `PriorityIcon` and the labels in `features/tickets/ticket-labels.ts`. Icons come from `lucide-react`.
+- One component per file (`PascalCase.tsx`); hooks and helpers are `kebab-case.ts`. Imports use explicit `.ts`/`.tsx` extensions.
+- Check the result in both light and dark mode at 1440×900.

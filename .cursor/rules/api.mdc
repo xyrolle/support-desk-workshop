@@ -1,0 +1,15 @@
+---
+description: Conventions for the Hono + Drizzle API in apps/api
+globs: apps/api/**
+alwaysApply: false
+---
+
+# API conventions
+
+- Follow the layers in `modules/<name>/`: `*.routes.ts` → `*.service.ts` → `*.repository.ts`. Copy the shape of `modules/tickets/`.
+- Routes: `validate("query" | "param" | "json", schema)` from `http/validation.ts` with a schema from `@support-desk/shared`, call one service function, return `c.json(result)`.
+- Services: call `requireProjectAccess(database, user, projectId)` from `auth/access.ts` before touching project data. Never check membership anywhere else.
+- Repositories: Drizzle query builder only, return shared types (`Ticket`, `Project`, `User`). Keep list and count in sync through `matchesFilter()`.
+- Errors: throw `NotFoundError` or `ValidationError` from `http/errors.ts`. Hidden and missing resources use the same 404 message.
+- Schema changes: edit `db/schema.ts`, run `npm run db:generate -w @support-desk/api -- --name <change>`, update `db/seed.ts`, commit the migration.
+- Relative imports end in `.ts`. No enums, no constructor parameter properties (Node strips types at runtime).
