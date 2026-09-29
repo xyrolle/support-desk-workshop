@@ -1,15 +1,14 @@
-import { NavLink } from "react-router";
 import { useProjects } from "../../api/queries.ts";
-import { Skeleton } from "../../components/Skeleton.tsx";
-import { classNames } from "../../lib/class-names.ts";
+import { SidebarLink } from "../../components/SidebarLink.tsx";
+import { SidebarSection } from "../../components/SidebarSection.tsx";
+import { Skeleton } from "../../components/ui/Skeleton.tsx";
 import { ProjectIcon } from "./ProjectIcon.tsx";
 
 export function ProjectSwitcher() {
   return (
-    <div>
-      <h2 className="px-2 pb-2 text-xs font-medium text-ink-subtle">Projects</h2>
+    <SidebarSection title="Projects">
       <ProjectLinks />
-    </div>
+    </SidebarSection>
   );
 }
 
@@ -18,9 +17,9 @@ function ProjectLinks() {
 
   if (projectsQuery.isPending) {
     return (
-      <div className="space-y-2 px-2 py-1">
-        <Skeleton className="h-5 w-32" />
-        <Skeleton className="h-5 w-28" />
+      <div className="space-y-3 px-2 py-1.5">
+        <Skeleton className="h-3 w-28" />
+        <Skeleton className="h-3 w-24" />
       </div>
     );
   }
@@ -30,22 +29,14 @@ function ProjectLinks() {
   }
 
   return (
-    <ul className="space-y-0.5">
+    <ul className="space-y-px">
       {projectsQuery.data.map((project) => (
         <li key={project.id}>
-          <NavLink to={`/projects/${project.id}`} className={projectLinkClassName}>
-            <ProjectIcon project={project} />
-            <span className="truncate">{project.name}</span>
-          </NavLink>
+          <SidebarLink to={`/projects/${project.id}`} icon={<ProjectIcon project={project} />}>
+            {project.name}
+          </SidebarLink>
         </li>
       ))}
     </ul>
-  );
-}
-
-function projectLinkClassName({ isActive }: { isActive: boolean }): string {
-  return classNames(
-    "flex h-8 items-center gap-2.5 rounded-md px-2 font-medium transition-colors",
-    isActive ? "bg-surface-muted text-ink" : "text-ink-muted hover:bg-surface-hover hover:text-ink",
   );
 }

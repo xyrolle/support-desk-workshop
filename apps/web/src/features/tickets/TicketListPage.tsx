@@ -5,10 +5,11 @@ import { useRef } from "react";
 import { Link } from "react-router";
 import { isNotFoundError } from "../../api/client.ts";
 import { useProject, useTickets } from "../../api/queries.ts";
-import { Button, buttonClassName } from "../../components/Button.tsx";
-import { EmptyState } from "../../components/EmptyState.tsx";
-import { ErrorState } from "../../components/ErrorState.tsx";
 import { Pagination } from "../../components/Pagination.tsx";
+import { Panel } from "../../components/Panel.tsx";
+import { Button, buttonClassName } from "../../components/ui/Button.tsx";
+import { EmptyState } from "../../components/ui/EmptyState.tsx";
+import { ErrorState } from "../../components/ui/ErrorState.tsx";
 import { ProjectHeader, ProjectHeaderSkeleton } from "../projects/ProjectHeader.tsx";
 import { useProjectId } from "../projects/use-project-id.ts";
 import { TicketTable } from "./TicketTable.tsx";
@@ -42,19 +43,24 @@ export function TicketListPage() {
         <ProjectHeaderSkeleton />
       )}
 
-      <div ref={scrollAreaRef} className="flex min-h-0 flex-1 flex-col overflow-y-auto">
-        <TicketListContent ticketsQuery={ticketsQuery} onPageChange={goToPage} />
+      <div className="flex min-h-0 flex-1 flex-col px-8 pb-8">
+        <Panel
+          scrollAreaRef={scrollAreaRef}
+          footer={
+            hasTickets && (
+              <Pagination
+                page={ticketPage.page}
+                pageSize={ticketPage.pageSize}
+                totalItems={ticketPage.totalItems}
+                totalPages={ticketPage.totalPages}
+                onPageChange={goToPage}
+              />
+            )
+          }
+        >
+          <TicketListContent ticketsQuery={ticketsQuery} onPageChange={goToPage} />
+        </Panel>
       </div>
-
-      {hasTickets && (
-        <Pagination
-          page={ticketPage.page}
-          pageSize={ticketPage.pageSize}
-          totalItems={ticketPage.totalItems}
-          totalPages={ticketPage.totalPages}
-          onPageChange={goToPage}
-        />
-      )}
     </>
   );
 }
@@ -115,7 +121,7 @@ function ProjectError({ error, onRetry }: ProjectErrorProps) {
         title="Project not found"
         description="This project does not exist, or you do not have access to it."
         action={
-          <Link to="/" className={buttonClassName}>
+          <Link to="/" className={buttonClassName()}>
             Back to your projects
           </Link>
         }
