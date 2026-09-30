@@ -110,6 +110,22 @@ describe("TicketListPage filters", () => {
     expect(screen.getByRole("combobox", { name: "Status" })).toHaveTextContent("Status");
   });
 
+  it("clears At risk along with the other filters", async () => {
+    const user = userEvent.setup();
+    renderTicketList("/projects/checkout?sla=at_risk&priority=urgent&page=2");
+
+    await user.click(await screen.findByRole("button", { name: "Clear filters" }));
+
+    const query = vi.mocked(api.listTickets).mock.lastCall?.[1];
+    expect(query?.page).toBe(1);
+    expect(query?.sla).toBeUndefined();
+    expect(query?.priority).toBeUndefined();
+    expect(screen.getByRole("button", { name: "At risk" })).toHaveAttribute(
+      "aria-pressed",
+      "false",
+    );
+  });
+
   it("keeps At risk in the URL and sends it with the other filters", async () => {
     const user = userEvent.setup();
     renderTicketList("/projects/checkout?sla=at_risk&page=2");
@@ -142,6 +158,22 @@ describe("TicketListPage filters", () => {
     ).toBeInTheDocument();
     expect(screen.getAllByRole("button", { name: "Clear filters" })).toHaveLength(2);
     expect(screen.getByRole("combobox", { name: "Priority" })).toBeInTheDocument();
+  });
+
+  it("treats At risk alone as a filter when nothing matches", async () => {
+    vi.mocked(api.listTickets).mockResolvedValue({
+      page: 1,
+      pageSize: 25,
+      totalItems: 0,
+      totalPages: 1,
+      items: [],
+    });
+    renderTicketList("/projects/checkout?sla=at_risk");
+
+    expect(
+      await screen.findByRole("heading", { name: "No tickets match these filters" }),
+    ).toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: "Clear filters" })).toHaveLength(2);
   });
 
   it("saves the current filters as a view and highlights it in the sidebar", async () => {

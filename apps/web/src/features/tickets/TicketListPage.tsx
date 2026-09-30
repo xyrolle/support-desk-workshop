@@ -7,10 +7,12 @@ import { ProjectHeader, ProjectHeaderSkeleton } from "../projects/ProjectHeader.
 import { ReadOnlyBadge } from "../projects/ReadOnlyBadge.tsx";
 import { useProjectId } from "../projects/use-project-id.ts";
 import { useProjectLabel } from "../projects/use-project-label.ts";
+import { editTicketsBlockedReason } from "../ticket-detail/edit-permission.ts";
 import { SaveViewDialog } from "../views/SaveViewDialog.tsx";
 import { FilterBar } from "./FilterBar.tsx";
 import { TicketListPanel } from "./TicketListPanel.tsx";
 import type { TicketColumn } from "./ticket-columns.tsx";
+import { useBulkTicketActions } from "./use-bulk-ticket-actions.ts";
 import {
   clearedFilters,
   filtersAreActive,
@@ -36,6 +38,11 @@ export function TicketListPage() {
   const projectLabel = useProjectLabel(projectId);
   const filtered = filtersAreActive(query);
   const narrowed = filtered || query.sla === "at_risk";
+  const bulkActions = useBulkTicketActions(
+    projectId,
+    query,
+    ticketsQuery.data?.items.map((ticket) => ticket.id) ?? [],
+  );
 
   function clearFilters() {
     changeQuery({ ...clearedFilters, sla: undefined });
@@ -91,6 +98,22 @@ export function TicketListPage() {
                 <SaveViewDialog projectId={projectId} filters={ticketFiltersOf(query)} />
               )}
             </>
+          }
+          selection={
+            projectQuery.isSuccess
+              ? {
+                  projectId,
+                  blockedReason: editTicketsBlockedReason(projectQuery.data),
+                  isSelected: bulkActions.isSelected,
+                  allSelected: bulkActions.allSelected,
+                  someSelected: bulkActions.someSelected,
+                  selectedCount: bulkActions.selectedCount,
+                  onToggle: bulkActions.toggle,
+                  onTogglePage: bulkActions.togglePage,
+                  onClear: bulkActions.clear,
+                  onApply: bulkActions.apply,
+                }
+              : undefined
           }
           empty={
             narrowed

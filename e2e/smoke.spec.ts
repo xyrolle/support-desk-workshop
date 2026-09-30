@@ -68,6 +68,26 @@ test("browse my tickets, a project and a ticket", async ({ page }) => {
     await expect(page.getByText("12 tickets")).toBeVisible();
   });
 
+  await test.step("a selection of tickets can be updated and undone", async () => {
+    await page.goto("/projects/checkout");
+    await page.getByRole("checkbox", { name: "Select CHK-205" }).click();
+    await page.getByRole("checkbox", { name: "Select CHK-196" }).click();
+
+    const bar = page.getByRole("toolbar", { name: "Selected rows" });
+    await expect(bar).toContainText("2 selected");
+    await bar.getByRole("button", { name: "Status" }).click();
+    await page.getByRole("menuitem", { name: "Waiting on customer" }).click();
+
+    await expect(page.getByText("Updated 2 tickets")).toBeVisible();
+    await expect(page.getByRole("row").filter({ hasText: "CHK-205" })).toContainText(
+      "Waiting on customer",
+    );
+
+    await page.getByRole("button", { name: "Undo" }).click();
+    await expect(page.getByRole("row").filter({ hasText: "CHK-205" })).toContainText("Open");
+    await expect(page.getByRole("row").filter({ hasText: "CHK-196" })).toContainText("In progress");
+  });
+
   await test.step("search opens a matching ticket", async () => {
     await page.goto("/projects/checkout");
     await page.getByRole("button", { name: /Search/ }).click();

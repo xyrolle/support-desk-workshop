@@ -1,4 +1,6 @@
 import {
+  type BulkTicketUpdate,
+  type BulkTicketUpdateResult,
   isAtRisk,
   measureTicketSla,
   type ProjectTicketListQuery,
@@ -9,6 +11,7 @@ import {
   type TicketListQuery,
   type TicketPage,
   type TicketSort,
+  type TicketState,
   type TicketStatus,
   unresolvedStatuses,
 } from "@support-desk/shared";
@@ -24,6 +27,7 @@ import { NotFoundError, ValidationError } from "../../http/errors.ts";
 import { buildPage, pageRange } from "../../http/pagination.ts";
 import type { RequestContext } from "../../request-context.ts";
 import { findStatusChanges, recordTicketEvents } from "../activity/activity.repository.ts";
+import type { TicketChange } from "../activity/ticket-change.ts";
 import {
   findForeignLabelIds,
   findTicketLabelIds,
@@ -216,38 +220,133 @@ export function updateTicket(
   ticketId: string,
   changes: TicketChanges,
 ): TicketDetail {
-  const { database, user, clock } = context;
-  const ticket = requireTicket(context, projectId, ticketId, "editTickets");
-  const labelIds = changes.labelIds && [...new Set(changes.labelIds)];
-  if (changes.assigneeId) {
-    requireAssignable(database, projectId, changes.assigneeId);
-  }
-  if (labelIds) {
-    requireProjectLabels(database, projectId, labelIds);
-  }
-
-  const current = { ...ticket, labelIds: findTicketLabelIds(database, ticket.id) };
-  const ticketChanges = describeChanges(current, { ...changes, labelIds });
-  if (ticketChanges.length > 0) {
-    const changedAt = clock.now().toISOString();
-    inTransaction(database, () => {
-      updateTicketRow(database, ticket.id, changedTicket(ticket, changes, changedAt));
-      if (labelIds) {
-        replaceTicketLabels(database, ticket.id, labelIds);
-      }
-      recordTicketEvents(
-        database,
-        ticketChanges.map((change) => ({
-          ...change,
-          ticketId: ticket.id,
-          actorId: user.id,
-          createdAt: changedAt,
-        })),
-      );
+  const prepared = prepareTicketChange(context, projectId, ticketId, changes);
+  if (prepared.events.length > 0) {
+    const changedAt = context.clock.now().toISOString();
+    inTransaction(context.database, () => {
+      commitTicketChange(context.database, context.user.id, changedAt, prepared);
     });
   }
 
   return getTicket(context, projectId, ticketId);
+}
+
+/**
+ * Applies the same edits to many tickets of one project. One transaction, so a
+ * failure leaves every ticket as it was. `previous` is what each ticket was
+ * before this call, in the same order as `updates`. The clocks are measured
+ * once for the whole batch.
+ */
+export function updateTickets(
+  context: RequestContext,
+  projectId: string,
+  body: BulkTicketUpdate,
+): BulkTicketUpdateResult {
+  const now = context.clock.now();
+  const changedAt = now.toISOString();
+  const previous = inTransaction(context.database, () =>
+    body.updates.map((update) => {
+      const prepared = prepareTicketChange(context, projectId, update.ticketId, update.changes);
+      commitTicketChange(context.database, context.user.id, changedAt, prepared);
+      return prepared.previous;
+    }),
+  );
+
+  const updated = body.updates.map((update) => {
+    const ticket = findTicket(context.database, projectId, update.ticketId);
+    if (!ticket) {
+      throw ticketNotFound(update.ticketId);
+    }
+    return ticket;
+  });
+
+  return {
+    previous,
+    tickets: withSla(context.database, updated, now).map(toTicketListItem),
+  };
+}
+
+type PreparedTicketChange = {
+  ticket: TicketRow;
+  /** The replacement set, or omitted when labels stay as they are. */
+  labelIds: number[] | undefined;
+  events: TicketChange[];
+  changes: TicketChanges;
+  previous: TicketState;
+};
+
+/** Loads the ticket, checks the policy and the new values, and describes the events. */
+function prepareTicketChange(
+  context: RequestContext,
+  projectId: string,
+  ticketId: string,
+  changes: TicketChanges,
+): PreparedTicketChange {
+  const ticket = requireTicket(context, projectId, ticketId, "editTickets");
+  const labelIds = changes.labelIds === undefined ? undefined : [...new Set(changes.labelIds)];
+  if (changes.assigneeId) {
+    requireAssignable(context.database, projectId, changes.assigneeId);
+  }
+  if (labelIds) {
+    requireProjectLabels(context.database, projectId, labelIds);
+  }
+
+  const currentLabelIds = findTicketLabelIds(context.database, ticket.id);
+  return {
+    ticket,
+    labelIds,
+    changes,
+    events: describeChanges(
+      {
+        status: ticket.status,
+        priority: ticket.priority,
+        assigneeId: ticket.assigneeId,
+        labelIds: currentLabelIds,
+      },
+      { ...changes, labelIds },
+    ),
+    previous: {
+      ticketId: ticket.id,
+      status: ticket.status,
+      priority: ticket.priority,
+      assigneeId: ticket.assigneeId,
+      labelIds: currentLabelIds,
+    },
+  };
+}
+
+/** Writes one prepared change. Call it inside the transaction that owns the edit. */
+function commitTicketChange(
+  database: AppDatabase,
+  actorId: string,
+  changedAt: string,
+  prepared: PreparedTicketChange,
+): void {
+  if (prepared.events.length === 0) {
+    return;
+  }
+  updateTicketRow(
+    database,
+    prepared.ticket.id,
+    changedTicket(prepared.ticket, prepared.changes, changedAt),
+  );
+  if (prepared.labelIds) {
+    replaceTicketLabels(database, prepared.ticket.id, prepared.labelIds);
+  }
+  recordTicketEvents(
+    database,
+    prepared.events.map((event) => ({
+      ...event,
+      ticketId: prepared.ticket.id,
+      actorId,
+      createdAt: changedAt,
+    })),
+  );
+}
+
+function toTicketListItem(ticket: TicketDetail): TicketListItem {
+  const { description: _description, ...item } = ticket;
+  return item;
 }
 
 /**

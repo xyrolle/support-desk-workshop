@@ -1,4 +1,10 @@
-import type { SortDirection, TicketListQuery, TicketPage, TicketSort } from "@support-desk/shared";
+import type {
+  SortDirection,
+  TicketChanges,
+  TicketListQuery,
+  TicketPage,
+  TicketSort,
+} from "@support-desk/shared";
 import type { UseQueryResult } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 import { useProjects } from "../../api/queries.ts";
@@ -9,11 +15,19 @@ import { EmptyState } from "../../components/ui/EmptyState.tsx";
 import { ErrorState } from "../../components/ui/ErrorState.tsx";
 import { Kbd } from "../../components/ui/Kbd.tsx";
 import { useSearchPalette } from "../search/use-command-palette.ts";
+import { BulkActionBar } from "./BulkActionBar.tsx";
 import { SortSelect } from "./SortSelect.tsx";
-import { TicketTable } from "./TicketTable.tsx";
+import { type TicketRowSelection, TicketTable } from "./TicketTable.tsx";
 import { TicketTableSkeleton } from "./TicketTableSkeleton.tsx";
 import type { TicketColumn } from "./ticket-columns.tsx";
 import { SlaClockProvider, useNow } from "./use-now.ts";
+
+export type TicketBulkSelection = TicketRowSelection & {
+  projectId: string;
+  selectedCount: number;
+  onClear: () => void;
+  onApply: (changes: TicketChanges) => void;
+};
 
 type TicketListPanelProps = {
   ticketsQuery: UseQueryResult<TicketPage>;
@@ -24,6 +38,8 @@ type TicketListPanelProps = {
   filters?: ReactNode;
   /** What to say when the list has no tickets at all. */
   empty: { title: string; description: string; action?: ReactNode };
+  /** Checkboxes and the selection bar. Omitted on lists that cannot bulk-edit. */
+  selection?: TicketBulkSelection;
 };
 
 /** A ticket list in a panel: its count and order on top, the page of tickets, the pages below. */
@@ -34,6 +50,7 @@ export function TicketListPanel({
   columns,
   filters,
   empty,
+  selection,
 }: TicketListPanelProps) {
   const ticketPage = ticketsQuery.data;
 
@@ -67,6 +84,16 @@ export function TicketListPanel({
             </>
           )
         }
+        overlay={
+          selection && (
+            <BulkActionBar
+              projectId={selection.projectId}
+              count={selection.selectedCount}
+              onClear={selection.onClear}
+              onApply={selection.onApply}
+            />
+          )
+        }
         footer={
           ticketPage &&
           ticketPage.items.length > 0 && (
@@ -84,6 +111,7 @@ export function TicketListPanel({
           ticketsQuery={ticketsQuery}
           columns={columns}
           empty={empty}
+          selection={selection}
           onPageChange={goToPage}
         />
       </Panel>
@@ -104,7 +132,10 @@ function LiveSlaClock({ children }: { children: ReactNode }) {
   );
 }
 
-type TicketListContentProps = Pick<TicketListPanelProps, "ticketsQuery" | "columns" | "empty"> & {
+type TicketListContentProps = Pick<
+  TicketListPanelProps,
+  "ticketsQuery" | "columns" | "empty" | "selection"
+> & {
   onPageChange: (page: number) => void;
 };
 
@@ -118,9 +149,15 @@ function SearchTicketsButton() {
   );
 }
 
-function TicketListContent({ ticketsQuery, columns, empty, onPageChange }: TicketListContentProps) {
+function TicketListContent({
+  ticketsQuery,
+  columns,
+  empty,
+  selection,
+  onPageChange,
+}: TicketListContentProps) {
   if (ticketsQuery.isPending) {
-    return <TicketTableSkeleton columns={columns} />;
+    return <TicketTableSkeleton columns={columns} selectable={selection != null} />;
   }
 
   if (ticketsQuery.isError) {
@@ -148,5 +185,5 @@ function TicketListContent({ ticketsQuery, columns, empty, onPageChange }: Ticke
     );
   }
 
-  return <TicketTable tickets={page.items} columns={columns} />;
+  return <TicketTable tickets={page.items} columns={columns} selection={selection} />;
 }
