@@ -99,6 +99,26 @@ export function findTicketRow(
     .get();
 }
 
+/** A project's tickets assigned to someone, limited to the given statuses. */
+export function findAssignedTicketRows(
+  database: AppDatabase,
+  projectId: string,
+  assigneeId: string,
+  statuses: readonly TicketStatus[],
+): TicketRow[] {
+  return database
+    .select()
+    .from(tickets)
+    .where(
+      and(
+        eq(tickets.projectId, projectId),
+        eq(tickets.assigneeId, assigneeId),
+        inArray(tickets.status, [...statuses]),
+      ),
+    )
+    .all();
+}
+
 export type TicketUpdate = Partial<
   Pick<TicketRow, "status" | "priority" | "assigneeId" | "firstRespondedAt" | "resolvedAt">
 > & { updatedAt: string };

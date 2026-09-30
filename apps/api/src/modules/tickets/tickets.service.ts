@@ -27,6 +27,7 @@ import { resolvedAtAfter } from "./resolution.ts";
 import { describeChanges } from "./ticket-changes.ts";
 import {
   countTickets,
+  findAssignedTicketRows,
   findTicket,
   findTicketRow,
   findTickets,
@@ -138,6 +139,41 @@ export function updateTicket(
   }
 
   return getTicket(context, projectId, ticketId);
+}
+
+/**
+ * Unassigns someone's unresolved tickets in a project, with an activity event
+ * for each, when they leave the project or become a viewer.
+ */
+export function releaseAssignedTickets(
+  context: RequestContext,
+  projectId: string,
+  assigneeId: string,
+): void {
+  const { database, user, clock } = context;
+  const changedAt = clock.now().toISOString();
+  const assignedTickets = findAssignedTicketRows(
+    database,
+    projectId,
+    assigneeId,
+    unresolvedStatuses,
+  );
+
+  inTransaction(database, () => {
+    for (const ticket of assignedTickets) {
+      updateTicketRow(database, ticket.id, { assigneeId: null, updatedAt: changedAt });
+      recordTicketEvents(database, [
+        {
+          type: "assignee_changed",
+          from: assigneeId,
+          to: null,
+          ticketId: ticket.id,
+          actorId: user.id,
+          createdAt: changedAt,
+        },
+      ]);
+    }
+  });
 }
 
 function changedTicket(ticket: TicketRow, changes: TicketChanges, changedAt: string): TicketUpdate {
