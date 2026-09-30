@@ -83,16 +83,19 @@ function MultiFilter<Value extends string | number>({
   options,
   onChange,
 }: MultiFilterProps<Value>) {
-  const selected = options.filter((option) => value.includes(option.value));
+  const selected = value.flatMap((item) => {
+    const option = options.find((candidate) => candidate.value === item);
+    return option ? [option] : [];
+  });
+  const [first, ...rest] = selected;
 
   return (
     <Select multiple value={value} onValueChange={onChange}>
-      <SelectTrigger appearance="field" aria-label={label} className="w-auto max-w-64">
-        {selected.length > 0 ? (
-          <span className="flex min-w-0 gap-1">
-            {selected.map((option) => (
-              <Badge key={String(option.value)}>{option.label}</Badge>
-            ))}
+      <SelectTrigger appearance="field" aria-label={label} className="w-auto shrink-0">
+        {first ? (
+          <span className="flex items-center gap-1">
+            <Badge>{first.label}</Badge>
+            {rest.length > 0 && <Badge>+{rest.length}</Badge>}
           </span>
         ) : (
           label

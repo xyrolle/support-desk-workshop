@@ -52,8 +52,11 @@ describe("TicketListPage filters", () => {
     expect(screen.getByRole("combobox", { name: "Priority" })).toBeInTheDocument();
     expect(screen.getByRole("combobox", { name: "Assignee" })).toBeInTheDocument();
     expect(screen.getByRole("combobox", { name: "Label" })).toBeInTheDocument();
-    expect(screen.getByText("Open")).toBeInTheDocument();
-    expect(screen.getByText("Waiting on customer")).toBeInTheDocument();
+    expect(screen.getByRole("combobox", { name: "Status" })).toHaveTextContent("Open");
+    expect(screen.getByRole("combobox", { name: "Status" })).toHaveTextContent("+1");
+    expect(screen.getByRole("combobox", { name: "Status" })).not.toHaveTextContent(
+      "Waiting on customer",
+    );
     expect(screen.getByText("Me")).toBeInTheDocument();
     expect(api.listTickets).toHaveBeenCalledWith(
       "checkout",
@@ -66,6 +69,24 @@ describe("TicketListPage filters", () => {
       "checkout",
       expect.objectContaining({ status: expect.arrayContaining(["done"]) }),
     );
+  });
+
+  it("shows the first value and a count when a filter has several", async () => {
+    const user = userEvent.setup();
+    renderTicketList(
+      "/projects/checkout?status=open&status=in_progress&status=blocked&assignee=me&label=4",
+    );
+
+    const status = await screen.findByRole("combobox", { name: "Status" });
+    expect(status).toHaveTextContent("Open");
+    expect(status).toHaveTextContent("+2");
+    expect(status).not.toHaveTextContent("In progress");
+    expect(status).not.toHaveTextContent("Waiting on customer");
+
+    await user.click(status);
+    expect(await screen.findByRole("option", { name: "Open" })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "In progress" })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "Waiting on customer" })).toBeInTheDocument();
   });
 
   it("goes back to page 1 when a filter changes, and clear removes the filters", async () => {
