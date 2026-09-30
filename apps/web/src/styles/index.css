@@ -45,6 +45,9 @@
   --color-status-resolved: light-dark(#007041, #70b489);
   --color-status-closed: var(--color-ink-subtle);
   --color-priority-urgent: light-dark(#cd4500, #f0874a);
+  /* Internal notes: yellow, the colour of "not sent to the customer". */
+  --color-note: light-dark(#8a6100, #e8c15a);
+  --color-note-soft: color-mix(in srgb, var(--color-note) 7%, var(--color-canvas));
   --color-danger: var(--color-status-blocked);
   --color-danger-soft: color-mix(in srgb, var(--color-danger) 10%, transparent);
 

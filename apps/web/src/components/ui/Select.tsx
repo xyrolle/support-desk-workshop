@@ -10,23 +10,50 @@ export const Select = BaseSelect.Root;
 /** Renders the chosen value inside the trigger. */
 export const SelectValue = BaseSelect.Value;
 
-/** A bordered button that shows the chosen value and opens the list. */
+type SelectTriggerProps = WithClassName<BaseSelect.Trigger.Props> & {
+  /**
+   * `field` is a bordered control, as in a toolbar. `inline` looks like the value it edits
+   * until hovered, as in a property list.
+   */
+  appearance?: "field" | "inline";
+};
+
+const triggerAppearanceClasses = {
+  field: classNames(
+    controlClassName,
+    "pr-2 pl-2.5 font-medium data-disabled:cursor-not-allowed data-disabled:opacity-60",
+  ),
+  inline: classNames(
+    "flex h-8 w-full items-center rounded-md px-2 text-ink transition-colors",
+    "hover:bg-surface-hover data-popup-open:bg-surface-hover",
+    "focus-visible:outline-2 focus-visible:-outline-offset-1 focus-visible:outline-accent",
+    "data-disabled:cursor-not-allowed data-disabled:opacity-60 data-disabled:hover:bg-transparent",
+  ),
+};
+
+/** A button that shows the chosen value and opens the list. */
 export function SelectTrigger({
+  appearance = "field",
   className,
   children,
   ...props
-}: WithClassName<BaseSelect.Trigger.Props>) {
+}: SelectTriggerProps) {
   return (
     <BaseSelect.Trigger
       className={classNames(
-        controlClassName,
-        "gap-2 pr-2 pl-2.5 font-medium whitespace-nowrap data-popup-open:bg-surface-hover",
+        triggerAppearanceClasses[appearance],
+        "gap-2 whitespace-nowrap data-popup-open:bg-surface-hover",
         className,
       )}
       {...props}
     >
       {children}
-      <BaseSelect.Icon className="ml-auto text-ink-subtle">
+      <BaseSelect.Icon
+        className={classNames(
+          "ml-auto text-ink-subtle",
+          appearance === "inline" && "opacity-0 group-hover/field:opacity-100",
+        )}
+      >
         <ChevronDown aria-hidden="true" className="size-3.5" />
       </BaseSelect.Icon>
     </BaseSelect.Trigger>

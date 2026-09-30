@@ -1,3 +1,4 @@
+import type { CustomerTier } from "./customers.ts";
 import type { ProjectRole } from "./projects.ts";
 import type { TicketPriority, TicketStatus } from "./tickets.ts";
 
@@ -22,4 +23,10 @@ export const roleNames: Record<ProjectRole, string> = {
   viewer: "Viewer",
   agent: "Agent",
   admin: "Admin",
+};
+
+export const tierNames: Record<CustomerTier, string> = {
+  free: "Free",
+  pro: "Pro",
+  enterprise: "Enterprise",
 };

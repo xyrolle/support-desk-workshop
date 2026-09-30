@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-test("browse my tickets and a project", async ({ page }) => {
+test("browse my tickets, a project and a ticket", async ({ page }) => {
   const pagination = page.getByRole("navigation", { name: "Pagination" });
 
   await test.step("the home page is My tickets", async () => {
@@ -29,6 +29,15 @@ test("browse my tickets and a project", async ({ page }) => {
 
     await expect(page).toHaveURL("/projects/checkout?page=2");
     await expect(pagination).toContainText("Showing 26–50 of 105");
+  });
+
+  await test.step("a ticket opens with its conversation and properties", async () => {
+    await page.getByRole("table").getByRole("link").first().click();
+
+    await expect(page).toHaveURL(/\/projects\/checkout\/tickets\/CHK-\d+$/);
+    await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+    await expect(page.getByText("opened the ticket")).toBeVisible();
+    await expect(page.getByRole("combobox", { name: /^Status:/ })).toBeVisible();
   });
 
   await test.step("a project the user cannot see looks like a missing one", async () => {

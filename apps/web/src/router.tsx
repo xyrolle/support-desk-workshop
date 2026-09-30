@@ -2,6 +2,7 @@ import { createBrowserRouter, Navigate, type RouteObject } from "react-router";
 import { Layout } from "./components/Layout.tsx";
 import { NotFoundPage } from "./components/NotFoundPage.tsx";
 import { MyTicketsPage } from "./features/my-tickets/MyTicketsPage.tsx";
+import { TicketDetailPage } from "./features/ticket-detail/TicketDetailPage.tsx";
 import { TicketListPage } from "./features/tickets/TicketListPage.tsx";
 
 /** The UI kit at /dev/ui: every design-system primitive on one page. Not in production builds. */
@@ -22,6 +23,7 @@ export const router = createBrowserRouter([
       { index: true, element: <Navigate to="/my-tickets" replace /> },
       { path: "my-tickets", Component: MyTicketsPage },
       { path: "projects/:projectId", Component: TicketListPage },
+      { path: "projects/:projectId/tickets/:ticketId", Component: TicketDetailPage },
       { path: "*", Component: NotFoundPage },
     ],
   },
