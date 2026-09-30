@@ -1,6 +1,7 @@
 import { FolderX } from "lucide-react";
 import { useProject, useTickets } from "../../api/queries.ts";
 import { QueryErrorState } from "../../components/QueryErrorState.tsx";
+import { MembersButton } from "../projects/MembersButton.tsx";
 import { ProjectHeader, ProjectHeaderSkeleton } from "../projects/ProjectHeader.tsx";
 import { ReadOnlyBadge } from "../projects/ReadOnlyBadge.tsx";
 import { useProjectId } from "../projects/use-project-id.ts";
@@ -51,6 +52,7 @@ export function TicketListPage() {
           title={projectQuery.data.name}
           description={projectQuery.data.description}
           titleBadge={<ReadOnlyBadge project={projectQuery.data} />}
+          actions={<MembersButton project={projectQuery.data} />}
         />
       ) : (
         <ProjectHeaderSkeleton />

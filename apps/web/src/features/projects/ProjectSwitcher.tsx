@@ -1,4 +1,5 @@
 import { type Project, roleNames } from "@support-desk/shared";
+import { Settings } from "lucide-react";
 import { useLocation } from "react-router";
 import { useProjects } from "../../api/queries.ts";
 import { SidebarLink } from "../../components/SidebarLink.tsx";
@@ -47,21 +48,33 @@ type ProjectLinksProps = {
   pathname: string;
 };
 
-/** The project, highlighted on its pages, with the user's role in it. */
+/** The project, highlighted on its tickets, and its settings for admins. */
 function ProjectLinks({ project, pathname }: ProjectLinksProps) {
   const projectPath = `/projects/${project.id}`;
+  const settingsPath = `${projectPath}/settings`;
   const inProject = pathname === projectPath || pathname.startsWith(`${projectPath}/`);
+  const inSettings = pathname === settingsPath;
 
   return (
     <li className="space-y-px">
       <SidebarLink
         to={projectPath}
-        active={inProject}
+        active={inProject && !inSettings}
         icon={<ProjectIcon project={project} />}
         trailing={roleNames[project.role]}
       >
         {project.name}
       </SidebarLink>
+      {project.permissions.manageMembers && (
+        <SidebarLink
+          to={settingsPath}
+          active={inSettings}
+          nested
+          icon={<Settings aria-hidden="true" className="size-3.5 shrink-0" strokeWidth={1.75} />}
+        >
+          Settings
+        </SidebarLink>
+      )}
     </li>
   );
 }

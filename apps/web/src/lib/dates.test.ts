@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatRelativeTime } from "./dates.ts";
+import { formatMonthYear, formatRelativeTime } from "./dates.ts";
 
 const now = new Date("2026-03-02T12:00:00.000Z");
 
@@ -14,5 +14,11 @@ describe("formatRelativeTime", () => {
     ["2025-12-01T12:00:00.000Z", "3 months ago"],
   ])("formats %s as %s", (isoDate, expected) => {
     expect(formatRelativeTime(isoDate, now)).toBe(expected);
+  });
+});
+
+describe("formatMonthYear", () => {
+  it("names the month of a calendar date, whatever the browser's time zone", () => {
+    expect(formatMonthYear("2022-11-01")).toBe("November 2022");
   });
 });

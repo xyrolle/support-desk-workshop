@@ -15,6 +15,12 @@ const relativeTimeFormat = new Intl.RelativeTimeFormat("en", { numeric: "auto" }
 
 const dateTimeFormat = new Intl.DateTimeFormat("en", { dateStyle: "medium", timeStyle: "short" });
 
+const monthYearFormat = new Intl.DateTimeFormat("en", {
+  month: "long",
+  year: "numeric",
+  timeZone: "UTC",
+});
+
 /** "just now", "5 minutes ago", "yesterday", "3 weeks ago", ... */
 export function formatRelativeTime(isoDate: string, now = new Date()): string {
   const secondsAgo = (now.getTime() - new Date(isoDate).getTime()) / 1000;
@@ -30,4 +36,9 @@ export function formatRelativeTime(isoDate: string, now = new Date()): string {
 /** "Mar 2, 2026, 9:00 AM" */
 export function formatDateTime(isoDate: string): string {
   return dateTimeFormat.format(new Date(isoDate));
+}
+
+/** "November 2022", for a calendar date such as "2022-11-24". */
+export function formatMonthYear(isoDate: string): string {
+  return monthYearFormat.format(new Date(isoDate));
 }
