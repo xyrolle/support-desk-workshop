@@ -1,5 +1,6 @@
 import type { SortDirection, TicketListQuery, TicketPage, TicketSort } from "@support-desk/shared";
 import type { UseQueryResult } from "@tanstack/react-query";
+import type { ReactNode } from "react";
 import { Pagination } from "../../components/Pagination.tsx";
 import { Panel } from "../../components/Panel.tsx";
 import { Button } from "../../components/ui/Button.tsx";
@@ -15,8 +16,10 @@ type TicketListPanelProps = {
   query: TicketListQuery;
   onQueryChange: (changes: Partial<TicketListQuery>) => void;
   columns: TicketColumn[];
+  /** Filter controls for a project's list. Kept visible when nothing matches. */
+  filters?: ReactNode;
   /** What to say when the list has no tickets at all. */
-  empty: { title: string; description: string };
+  empty: { title: string; description: string; action?: ReactNode };
 };
 
 /** A ticket list in a panel: its count and order on top, the page of tickets, the pages below. */
@@ -25,6 +28,7 @@ export function TicketListPanel({
   query,
   onQueryChange,
   columns,
+  filters,
   empty,
 }: TicketListPanelProps) {
   const ticketPage = ticketsQuery.data;
@@ -39,12 +43,14 @@ export function TicketListPanel({
   }
 
   const isEmpty = ticketPage?.totalItems === 0;
+  const showToolbar = !isEmpty || filters != null;
 
   return (
     <Panel
       toolbar={
-        !isEmpty && (
+        showToolbar && (
           <>
+            {filters}
             <p className="px-1 text-ink-muted tabular-nums">
               {ticketPage &&
                 `${ticketPage.totalItems} ${ticketPage.totalItems === 1 ? "ticket" : "tickets"}`}
@@ -99,7 +105,7 @@ function TicketListContent({ ticketsQuery, columns, empty, onPageChange }: Ticke
 
   const page = ticketsQuery.data;
   if (page.totalItems === 0) {
-    return <EmptyState title={empty.title} description={empty.description} />;
+    return <EmptyState title={empty.title} description={empty.description} action={empty.action} />;
   }
 
   if (page.items.length === 0) {

@@ -1,6 +1,7 @@
 import type {
   NewComment,
   NewProjectMember,
+  NewSavedView,
   ProjectMemberChanges,
   TicketChanges,
 } from "@support-desk/shared";
@@ -70,5 +71,13 @@ export function useRemoveMember(projectId: string) {
   return useMutation({
     mutationFn: (userId: string) => api.removeMember(projectId, userId),
     onSuccess: () => refreshMembership(queryClient),
+  });
+}
+
+export function useCreateView(projectId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (view: NewSavedView) => api.createView(projectId, view),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.views(projectId) }),
   });
 }

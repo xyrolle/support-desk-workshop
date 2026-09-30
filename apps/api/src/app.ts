@@ -13,6 +13,7 @@ import { projectRoutes } from "./modules/projects/projects.routes.ts";
 import { reportRoutes } from "./modules/reports/reports.routes.ts";
 import { myTicketRoutes, ticketRoutes } from "./modules/tickets/tickets.routes.ts";
 import { userRoutes } from "./modules/users/users.routes.ts";
+import { viewRoutes } from "./modules/views/views.routes.ts";
 
 type AppOptions = {
   database: AppDatabase;
@@ -33,6 +34,7 @@ export function createApp(options: AppOptions) {
   app.route("/api/projects", memberRoutes);
   app.route("/api/projects", labelRoutes);
   app.route("/api/projects", ticketRoutes);
+  app.route("/api/projects", viewRoutes);
   app.route("/api/projects", commentRoutes);
   app.route("/api/projects", activityRoutes);
   app.route("/api/projects", reportRoutes);

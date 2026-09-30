@@ -74,6 +74,29 @@ export const sortDirectionSchema = z.enum(sortDirections);
 
 export type SortDirection = z.infer<typeof sortDirectionSchema>;
 
+/**
+ * One query parameter or several repeats (`?status=open` or `?status=open&status=blocked`).
+ * Hono passes a single value as a string and repeats as an array.
+ */
+function repeated<Item extends z.ZodType>(item: Item) {
+  return z
+    .union([item, z.array(item)])
+    .transform((value) => (Array.isArray(value) ? value : [value]))
+    .optional();
+}
+
+/** Filters shared by a project's ticket list and its saved views. Values inside one field are OR. */
+export const ticketFiltersSchema = z.object({
+  status: repeated(ticketStatusSchema),
+  priority: repeated(ticketPrioritySchema),
+  /** A teammate id, `me` (the current user) or `unassigned`. */
+  assignee: repeated(z.string().min(1)),
+  /** A label id of the project. */
+  label: repeated(z.coerce.number().int().positive()),
+});
+
+export type TicketFilters = z.infer<typeof ticketFiltersSchema>;
+
 /** Query of every ticket list: a project's tickets, "My tickets" and an organization's tickets. */
 export const ticketListQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
@@ -82,6 +105,11 @@ export const ticketListQuerySchema = z.object({
 });
 
 export type TicketListQuery = z.infer<typeof ticketListQuerySchema>;
+
+/** A project's ticket list: the shared paging and sort, plus the four filters. */
+export const projectTicketListQuerySchema = ticketListQuerySchema.extend(ticketFiltersSchema.shape);
+
+export type ProjectTicketListQuery = z.infer<typeof projectTicketListQuerySchema>;
 
 export const MAX_LABELS_PER_TICKET = 10;
 

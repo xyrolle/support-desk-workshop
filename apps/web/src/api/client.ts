@@ -5,10 +5,13 @@ import {
   labelSchema,
   type NewComment,
   type NewProjectMember,
+  type NewSavedView,
   organizationDetailSchema,
   type ProjectMemberChanges,
+  type ProjectTicketListQuery,
   projectMemberSchema,
   projectSchema,
+  savedViewSchema,
   type TicketChanges,
   type TicketListQuery,
   ticketDetailSchema,
@@ -125,6 +128,17 @@ export const api = {
     return request(`${projectPath(projectId)}/labels`, labelSchema.array());
   },
 
+  listViews(projectId: string) {
+    return request(`${projectPath(projectId)}/views`, savedViewSchema.array());
+  },
+
+  createView(projectId: string, view: NewSavedView) {
+    return request(`${projectPath(projectId)}/views`, savedViewSchema, {
+      method: "POST",
+      body: view,
+    });
+  },
+
   listMembers(projectId: string) {
     return request(`${projectPath(projectId)}/members`, projectMemberSchema.array());
   },
@@ -146,7 +160,7 @@ export const api = {
     await send(path, { method: "DELETE" });
   },
 
-  listTickets(projectId: string, query: TicketListQuery) {
+  listTickets(projectId: string, query: ProjectTicketListQuery) {
     const searchParams = toSearchParams(query);
     return request(`${projectPath(projectId)}/tickets?${searchParams}`, ticketPageSchema);
   },

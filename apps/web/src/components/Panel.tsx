@@ -18,7 +18,7 @@ export function Panel({ toolbar, footer, overlay, children }: PanelProps) {
   return (
     <section className="flex flex-col overflow-clip rounded-lg border border-line bg-canvas">
       {toolbar && (
-        <div className="flex h-12 shrink-0 items-center gap-2 border-b border-line px-3">
+        <div className="flex min-h-12 shrink-0 flex-wrap items-center gap-2 border-b border-line px-3">
           {toolbar}
         </div>
       )}

@@ -92,6 +92,74 @@ describe("GET /api/projects/:projectId/tickets", () => {
     expect(status).toBe(200);
   });
 
+  it("filters by one status", async () => {
+    const { status, page } = await listTickets("/api/projects/checkout/tickets?status=blocked");
+
+    expect(status).toBe(200);
+    expect(page.totalItems).toBe(12);
+    expect(page.items[0]?.id).toBe("CHK-188");
+  });
+
+  it("combines repeated statuses with OR", async () => {
+    const { page } = await listTickets("/api/projects/checkout/tickets?status=open&status=blocked");
+
+    expect(page.totalItems).toBe(32);
+  });
+
+  it("combines priority and assignee with AND", async () => {
+    const { page } = await listTickets(
+      "/api/projects/checkout/tickets?priority=urgent&assignee=unassigned",
+    );
+
+    expect(page.items.map((ticket) => ticket.id)).toEqual(["CHK-205", "CHK-204"]);
+  });
+
+  it("treats assignee=me as the current user, in every status", async () => {
+    const { page } = await listTickets("/api/projects/checkout/tickets?assignee=me");
+
+    expect(page.totalItems).toBe(21);
+  });
+
+  it("ORs assignees and ANDs them with statuses", async () => {
+    const { page } = await listTickets(
+      "/api/projects/checkout/tickets?assignee=me&assignee=unassigned&status=open&status=in_progress&status=blocked",
+    );
+
+    expect(page.totalItems).toBe(19);
+  });
+
+  it("ORs labels without counting a ticket twice", async () => {
+    const { page } = await listTickets("/api/projects/checkout/tickets?label=4&label=5");
+
+    expect(page.totalItems).toBe(38);
+  });
+
+  it("ANDs status, priority and label, in the default order", async () => {
+    const { page } = await listTickets(
+      "/api/projects/checkout/tickets?status=open&status=in_progress&priority=high&priority=urgent&label=4",
+    );
+
+    expect(page.items.map((ticket) => ticket.id)).toEqual([
+      "CHK-196",
+      "CHK-182",
+      "CHK-160",
+      "CHK-176",
+    ]);
+  });
+
+  it("combines filters with sort and page, counting only the matches", async () => {
+    const byPriority = await listTickets(
+      "/api/projects/checkout/tickets?status=blocked&sort=priority",
+    );
+    const secondPage = await listTickets("/api/projects/checkout/tickets?label=4&label=5&page=2");
+
+    expect(byPriority.page.totalItems).toBe(12);
+    expect(byPriority.page.items[0]?.id).toBe("CHK-191");
+    expect(secondPage.page).toMatchObject({ page: 2, totalItems: 38, totalPages: 2 });
+    expect(secondPage.page.items).toHaveLength(13);
+    expect(secondPage.page.items[0]?.id).toBe("CHK-144");
+  });
+
   it.each(["page=0", "page=-1", "page=1.5", "page=two", "sort=title", "direction=up"])(
     "rejects %s with a validation error",
     async (query) => {
@@ -103,6 +171,29 @@ describe("GET /api/projects/:projectId/tickets", () => {
       expect(response.body).toMatchObject({ error: { code: "validation_error" } });
     },
   );
+
+  it.each(["status=done", "priority=critical", "label=payments", "assignee="])(
+    "rejects %s with a validation error",
+    async (query) => {
+      const { app } = createTestApp();
+
+      const response = await getJson(app, `/api/projects/checkout/tickets?${query}`);
+
+      expect(response.status).toBe(400);
+      expect(response.body).toMatchObject({ error: { code: "validation_error" } });
+    },
+  );
+
+  it("rejects a label from another project", async () => {
+    const { app } = createTestApp();
+
+    const response = await getJson(app, "/api/projects/checkout/tickets?label=10");
+
+    expect(response.status).toBe(400);
+    expect(response.body).toEqual({
+      error: { code: "validation_error", message: "label: 10 is not a label of this project." },
+    });
+  });
 
   it("returns the same 404 for a hidden project and a missing one", async () => {
     const { app } = createTestApp();

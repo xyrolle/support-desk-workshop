@@ -45,4 +45,26 @@ test("browse my tickets, a project and a ticket", async ({ page }) => {
 
     await expect(page.getByRole("heading", { name: "Project not found" })).toBeVisible();
   });
+
+  await test.step("a filter can be saved and opened as a view", async () => {
+    await page.goto("/projects/checkout?status=blocked");
+
+    await expect(page.getByText("12 tickets")).toBeVisible();
+    await expect(page.getByRole("combobox", { name: "Status" })).toContainText(
+      "Waiting on customer",
+    );
+
+    await page.getByRole("button", { name: "Save view" }).click();
+    await page.getByRole("textbox", { name: "View name" }).fill("Blocked");
+    await page.getByRole("button", { name: "Save" }).click();
+
+    const view = page
+      .getByRole("navigation", { name: "Projects" })
+      .getByRole("link", { name: "Blocked" });
+    await expect(view).toHaveAttribute("aria-current", "page");
+    await view.click();
+
+    await expect(page).toHaveURL("/projects/checkout?status=blocked");
+    await expect(page.getByText("12 tickets")).toBeVisible();
+  });
 });

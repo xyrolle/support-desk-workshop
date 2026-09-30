@@ -58,4 +58,15 @@ describe("GET /api/me/tickets", () => {
 
     expect(response.status).toBe(400);
   });
+
+  it("ignores project ticket filters", async () => {
+    const { app } = createTestApp();
+
+    const invalid = await getJson(app, "/api/me/tickets?status=done");
+    const closed = await getJson(app, "/api/me/tickets?status=closed");
+
+    expect(invalid.status).toBe(200);
+    expect(closed.status).toBe(200);
+    expect(ticketPageSchema.parse(closed.body).totalItems).toBe(15);
+  });
 });

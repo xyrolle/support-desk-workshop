@@ -1,10 +1,13 @@
 import { type Project, roleNames } from "@support-desk/shared";
 import { Settings } from "lucide-react";
 import { useLocation } from "react-router";
-import { useProjects } from "../../api/queries.ts";
+import { useProjects, useViews } from "../../api/queries.ts";
 import { SidebarLink } from "../../components/SidebarLink.tsx";
 import { SidebarSection } from "../../components/SidebarSection.tsx";
 import { Skeleton } from "../../components/ui/Skeleton.tsx";
+import { useTicketListQuery } from "../tickets/use-ticket-list-query.ts";
+import { filtersMatch } from "../views/filter-search.ts";
+import { ProjectViews } from "../views/ProjectViews.tsx";
 import { ProjectIcon } from "./ProjectIcon.tsx";
 
 export function ProjectSwitcher() {
@@ -54,12 +57,15 @@ function ProjectLinks({ project, pathname }: ProjectLinksProps) {
   const settingsPath = `${projectPath}/settings`;
   const inProject = pathname === projectPath || pathname.startsWith(`${projectPath}/`);
   const inSettings = pathname === settingsPath;
+  const { query } = useTicketListQuery();
+  const viewsQuery = useViews(project.id, inProject);
+  const viewIsCurrent = viewsQuery.data?.some((view) => filtersMatch(query, view.filters)) ?? false;
 
   return (
     <li className="space-y-px">
       <SidebarLink
         to={projectPath}
-        active={inProject && !inSettings}
+        active={inProject && !inSettings && !viewIsCurrent}
         icon={<ProjectIcon project={project} />}
         trailing={roleNames[project.role]}
       >
@@ -75,6 +81,7 @@ function ProjectLinks({ project, pathname }: ProjectLinksProps) {
           Settings
         </SidebarLink>
       )}
+      {inProject && <ProjectViews project={project} />}
     </li>
   );
 }

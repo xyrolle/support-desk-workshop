@@ -7,6 +7,7 @@ import {
   organizations,
   projectMembers,
   projects,
+  savedViews,
   ticketEvents,
   ticketLabels,
   tickets,
@@ -33,6 +34,7 @@ export function seedDatabase(database: AppDatabase, now = new Date()): SeedSumma
 
   inTransaction(database, () => {
     for (const table of [
+      savedViews,
       ticketEvents,
       comments,
       ticketLabels,
@@ -82,7 +84,8 @@ type SeedTable =
   | typeof tickets
   | typeof ticketLabels
   | typeof comments
-  | typeof ticketEvents;
+  | typeof ticketEvents
+  | typeof savedViews;
 
 function insertInBatches<Table extends SeedTable>(
   database: AppDatabase,

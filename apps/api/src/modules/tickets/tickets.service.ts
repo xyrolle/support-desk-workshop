@@ -1,4 +1,5 @@
 import {
+  type ProjectTicketListQuery,
   type TicketChanges,
   type TicketDetail,
   type TicketListQuery,
@@ -39,10 +40,33 @@ import {
 export function listProjectTickets(
   context: RequestContext,
   projectId: string,
-  query: TicketListQuery,
+  query: ProjectTicketListQuery,
 ): TicketPage {
   authorize(context, projectId);
-  return pageOfTickets(context.database, { projectIds: [projectId] }, query);
+  if (query.label) {
+    requireFilterLabels(context.database, projectId, query.label);
+  }
+  return pageOfTickets(context.database, projectFilter(context, projectId, query), query);
+}
+
+/** The project's tickets, narrowed by the list filters. `me` is the current user. */
+function projectFilter(
+  context: RequestContext,
+  projectId: string,
+  query: ProjectTicketListQuery,
+): TicketFilter {
+  const assignees = query.assignee?.map((assignee) =>
+    assignee === "me" ? context.user.id : assignee,
+  );
+  const assigneeIds = assignees?.filter((assignee) => assignee !== "unassigned");
+  return {
+    projectIds: [projectId],
+    statuses: query.status,
+    priorities: query.priority,
+    assigneeIds: assigneeIds && assigneeIds.length > 0 ? assigneeIds : undefined,
+    includeUnassigned: query.assignee?.includes("unassigned"),
+    labelIds: query.label,
+  };
 }
 
 /** "My tickets": assigned to the current user and not resolved yet, in any of their projects. */
@@ -199,6 +223,13 @@ function requireProjectLabels(database: AppDatabase, projectId: string, labelIds
   const [foreignLabelId] = findForeignLabelIds(database, projectId, labelIds);
   if (foreignLabelId !== undefined) {
     throw new ValidationError(`labelIds: ${foreignLabelId} is not a label of this project.`);
+  }
+}
+
+function requireFilterLabels(database: AppDatabase, projectId: string, labelIds: number[]) {
+  const [foreignLabelId] = findForeignLabelIds(database, projectId, labelIds);
+  if (foreignLabelId !== undefined) {
+    throw new ValidationError(`label: ${foreignLabelId} is not a label of this project.`);
   }
 }
 

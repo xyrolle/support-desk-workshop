@@ -10,3 +10,4 @@ export * from "./projects.ts";
 export * from "./ticket-ref.ts";
 export * from "./tickets.ts";
 export * from "./users.ts";
+export * from "./views.ts";

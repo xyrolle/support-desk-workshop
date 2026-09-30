@@ -3,12 +3,13 @@ import {
   type TicketDetail,
   type TicketListItem,
   type TicketListQuery,
+  type TicketPriority,
   type TicketSort,
   type TicketStatus,
   ticketPriorities,
   type User,
 } from "@support-desk/shared";
-import { and, asc, count, desc, eq, inArray, type SQL, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, exists, inArray, isNull, or, type SQL, sql } from "drizzle-orm";
 import type { SQLiteColumn } from "drizzle-orm/sqlite-core";
 import type { AppDatabase } from "../../db/client.ts";
 import {
@@ -17,6 +18,7 @@ import {
   type OrganizationRow,
   organizations,
   type TicketRow,
+  ticketLabels,
   tickets,
   users,
 } from "../../db/schema.ts";
@@ -26,9 +28,15 @@ import { findLabelsOfTickets } from "../labels/labels.repository.ts";
 export type TicketFilter = {
   /** Required, so a list can only ever show tickets from projects the user can see. */
   projectIds: string[];
+  /** A single assignee, ANDed with the rest. Used by My tickets. */
   assigneeId?: string;
+  /** Several assignees, ORed. Combined with `includeUnassigned`. */
+  assigneeIds?: string[];
+  includeUnassigned?: boolean;
   organizationId?: string;
   statuses?: readonly TicketStatus[];
+  priorities?: readonly TicketPriority[];
+  labelIds?: number[];
 };
 
 export type TicketOrder = Pick<TicketListQuery, "sort" | "direction">;
@@ -47,7 +55,7 @@ export function findTickets(
   range: PageRange,
 ): TicketListItem[] {
   const rows = selectTickets(database)
-    .where(matchesFilter(filter))
+    .where(matchesFilter(database, filter))
     .orderBy(...orderBy(order))
     .limit(range.limit)
     .offset(range.offset)
@@ -66,7 +74,7 @@ export function countTickets(database: AppDatabase, filter: TicketFilter): numbe
     .select({ total: count() })
     .from(tickets)
     .innerJoin(contacts, eq(contacts.id, tickets.requesterId))
-    .where(matchesFilter(filter))
+    .where(matchesFilter(database, filter))
     .get();
 
   return result?.total ?? 0;
@@ -137,12 +145,40 @@ function selectTickets(database: AppDatabase) {
     .innerJoin(organizations, eq(organizations.id, contacts.organizationId));
 }
 
-function matchesFilter(filter: TicketFilter): SQL | undefined {
+function matchesFilter(database: AppDatabase, filter: TicketFilter): SQL | undefined {
   return and(
     inArray(tickets.projectId, filter.projectIds),
     filter.assigneeId ? eq(tickets.assigneeId, filter.assigneeId) : undefined,
+    assigneeClause(filter),
     filter.organizationId ? eq(contacts.organizationId, filter.organizationId) : undefined,
     filter.statuses ? inArray(tickets.status, [...filter.statuses]) : undefined,
+    filter.priorities ? inArray(tickets.priority, [...filter.priorities]) : undefined,
+    labelClause(database, filter.labelIds),
+  );
+}
+
+/** Assignees in `assigneeIds` and unassigned tickets are alternatives. */
+function assigneeClause(filter: TicketFilter): SQL | undefined {
+  const clauses = [
+    filter.assigneeIds?.length ? inArray(tickets.assigneeId, filter.assigneeIds) : undefined,
+    filter.includeUnassigned ? isNull(tickets.assigneeId) : undefined,
+  ].filter((clause) => clause !== undefined);
+  if (clauses.length === 0) {
+    return undefined;
+  }
+  return or(...clauses);
+}
+
+/** A ticket matches when it has any of the labels. `exists` keeps one row per ticket. */
+function labelClause(database: AppDatabase, labelIds: number[] | undefined): SQL | undefined {
+  if (!labelIds?.length) {
+    return undefined;
+  }
+  return exists(
+    database
+      .select({ one: sql`1` })
+      .from(ticketLabels)
+      .where(and(eq(ticketLabels.ticketId, tickets.id), inArray(ticketLabels.labelId, labelIds))),
   );
 }
 

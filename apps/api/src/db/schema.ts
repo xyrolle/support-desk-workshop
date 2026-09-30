@@ -182,6 +182,27 @@ export const ticketEvents = sqliteTable(
   (table) => [index("ticket_events_ticket_created_at_idx").on(table.ticketId, table.createdAt)],
 );
 
+/** A member's private filter, visible only to them. `filters` is JSON text. */
+export const savedViews = sqliteTable(
+  "saved_views",
+  {
+    id: integer("id").primaryKey(),
+    projectId: text("project_id")
+      .notNull()
+      .references(() => projects.id),
+    ownerId: text("owner_id")
+      .notNull()
+      .references(() => users.id),
+    name: text("name").notNull(),
+    filters: text("filters").notNull(),
+    createdAt: text("created_at").notNull(),
+  },
+  (table) => [
+    unique("saved_views_owner_name_unique").on(table.projectId, table.ownerId, table.name),
+    index("saved_views_owner_idx").on(table.projectId, table.ownerId),
+  ],
+);
+
 export type UserRow = typeof users.$inferSelect;
 export type ProjectRow = typeof projects.$inferSelect;
 export type ProjectMemberRow = typeof projectMembers.$inferSelect;
@@ -193,3 +214,4 @@ export type TicketLabelRow = typeof ticketLabels.$inferSelect;
 export type NewCommentRow = typeof comments.$inferInsert;
 export type TicketEventRow = typeof ticketEvents.$inferSelect;
 export type NewTicketEventRow = typeof ticketEvents.$inferInsert;
+export type SavedViewRow = typeof savedViews.$inferSelect;

@@ -1,4 +1,4 @@
-import type { TicketListQuery } from "@support-desk/shared";
+import type { ProjectTicketListQuery, TicketListQuery } from "@support-desk/shared";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "./client.ts";
 
@@ -15,7 +15,8 @@ export const queryKeys = {
   project: (projectId: string) => ["projects", projectId] as const,
   labels: (projectId: string) => ["projects", projectId, "labels"] as const,
   members: (projectId: string) => ["projects", projectId, "members"] as const,
-  tickets: (projectId: string, query: TicketListQuery) =>
+  views: (projectId: string) => ["projects", projectId, "views"] as const,
+  tickets: (projectId: string, query: ProjectTicketListQuery) =>
     ["projects", projectId, "tickets", "list", query] as const,
   ticket: (projectId: string, ticketId: string) =>
     ["projects", projectId, "tickets", ticketId] as const,
@@ -69,7 +70,15 @@ export function useMembers(projectId: string) {
   });
 }
 
-export function useTickets(projectId: string, query: TicketListQuery) {
+export function useViews(projectId: string, enabled = true) {
+  return useQuery({
+    queryKey: queryKeys.views(projectId),
+    queryFn: () => api.listViews(projectId),
+    enabled,
+  });
+}
+
+export function useTickets(projectId: string, query: ProjectTicketListQuery) {
   return useQuery({
     queryKey: queryKeys.tickets(projectId, query),
     queryFn: () => api.listTickets(projectId, query),
