@@ -1,29 +1,60 @@
 import type { Project } from "@support-desk/shared";
-import { Breadcrumbs } from "../../components/Breadcrumbs.tsx";
+import type { ReactNode } from "react";
+import { type Breadcrumb, Breadcrumbs } from "../../components/Breadcrumbs.tsx";
 import { PageHeader } from "../../components/PageHeader.tsx";
 import { TopBar } from "../../components/TopBar.tsx";
 import { Skeleton } from "../../components/ui/Skeleton.tsx";
 import { ProjectIcon } from "./ProjectIcon.tsx";
 
-export function ProjectHeader({ project }: { project: Project }) {
+type ProjectHeaderProps = {
+  project: Project;
+  /** The page inside the project, such as "Tickets" or "Members". */
+  page: string;
+  title: string;
+  description?: string;
+  titleBadge?: ReactNode;
+  actions?: ReactNode;
+  /** Keeps the header as narrow as a settings page's content. */
+  narrow?: boolean;
+};
+
+export function ProjectHeader({
+  project,
+  page,
+  title,
+  description,
+  titleBadge,
+  actions,
+  narrow = false,
+}: ProjectHeaderProps) {
   return (
     <header className="shrink-0">
-      <title>{`${project.name} · Support Desk`}</title>
+      <title>
+        {title === project.name
+          ? `${project.name} · Support Desk`
+          : `${title} · ${project.name} · Support Desk`}
+      </title>
       <TopBar>
-        <Breadcrumbs
-          items={[
-            {
-              label: project.name,
-              to: `/projects/${project.id}`,
-              icon: <ProjectIcon project={project} />,
-            },
-            { label: "Tickets" },
-          ]}
-        />
+        <Breadcrumbs items={[projectCrumb(project), { label: page }]} />
       </TopBar>
-      <PageHeader title={project.name} description={project.description} />
+      <div className={narrow ? "max-w-4xl" : undefined}>
+        <PageHeader
+          title={title}
+          description={description}
+          titleBadge={titleBadge}
+          actions={actions}
+        />
+      </div>
     </header>
   );
+}
+
+export function projectCrumb(project: Project): Breadcrumb {
+  return {
+    label: project.name,
+    to: `/projects/${project.id}`,
+    icon: <ProjectIcon project={project} />,
+  };
 }
 
 export function ProjectHeaderSkeleton() {

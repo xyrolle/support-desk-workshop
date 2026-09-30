@@ -12,7 +12,7 @@ type SelectionBarProps = {
 
 /**
  * Floats over the bottom of a Panel while rows are selected; Escape clears the selection.
- * Pass it as the Panel's `overlay`.
+ * Pass it as the Panel's `overlay`, which positions it.
  */
 export function SelectionBar({ count, onClear, children }: SelectionBarProps) {
   const clear = useEffectEvent(onClear);
@@ -38,7 +38,7 @@ export function SelectionBar({ count, onClear, children }: SelectionBarProps) {
     <div
       role="toolbar"
       aria-label="Selected rows"
-      className="absolute bottom-4 left-1/2 z-20 flex h-11 -translate-x-1/2 items-center gap-1 rounded-lg border border-line bg-popover px-1.5 shadow-popover"
+      className="flex h-11 items-center gap-1 rounded-lg border border-line bg-popover px-1.5 shadow-popover"
     >
       <span className="px-2 font-medium whitespace-nowrap tabular-nums">{count} selected</span>
       <span aria-hidden="true" className="mx-1 h-5 w-px bg-line" />

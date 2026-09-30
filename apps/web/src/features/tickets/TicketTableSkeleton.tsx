@@ -1,4 +1,6 @@
 import { Skeleton } from "../../components/ui/Skeleton.tsx";
+import { Table, TableCell, TableHead, TableHeader, TableRow } from "../../components/ui/Table.tsx";
+import { type TicketColumn, ticketColumns } from "./ticket-columns.tsx";
 
 /** Title widths vary from row to row, so the placeholder reads like a real list. */
 const placeholderRows = [
@@ -10,40 +12,45 @@ const placeholderRows = [
   { id: 6, titleWidth: "w-1/2" },
   { id: 7, titleWidth: "w-3/5" },
   { id: 8, titleWidth: "w-2/5" },
-  { id: 9, titleWidth: "w-1/2" },
-  { id: 10, titleWidth: "w-1/3" },
 ];
 
-/** Matches TicketTable's columns, so nothing moves when the tickets arrive. */
-export function TicketTableSkeleton() {
+const placeholderWidths: Record<TicketColumn, string> = {
+  id: "w-14",
+  title: "",
+  project: "w-20",
+  customer: "w-28",
+  status: "w-24",
+  priority: "w-16",
+  assignee: "w-24",
+  updated: "ml-auto w-16",
+};
+
+/** The table's real header over placeholder rows, so nothing moves when the tickets arrive. */
+export function TicketTableSkeleton({ columns }: { columns: TicketColumn[] }) {
   return (
     <div role="status" aria-label="Loading tickets">
-      <div className="h-9 border-b border-line bg-surface-subtle" />
-      {placeholderRows.map((row) => (
-        <div key={row.id} className="flex h-10 items-center border-b border-line-subtle">
-          <div className="w-24 shrink-0 pr-3 pl-4">
-            <Skeleton className="h-2.5 w-14" />
-          </div>
-          <div className="min-w-0 flex-1 px-3">
-            <Skeleton className={`h-2.5 ${row.titleWidth}`} />
-          </div>
-          <div className="flex w-36 shrink-0 items-center gap-2 px-3">
-            <Skeleton className="size-3.5 rounded-full" />
-            <Skeleton className="h-2.5 w-16" />
-          </div>
-          <div className="flex w-32 shrink-0 items-center gap-2 px-3">
-            <Skeleton className="size-3.5" />
-            <Skeleton className="h-2.5 w-12" />
-          </div>
-          <div className="flex w-48 shrink-0 items-center gap-2 px-3">
-            <Skeleton className="size-5 rounded-full" />
-            <Skeleton className="h-2.5 w-24" />
-          </div>
-          <div className="flex w-32 shrink-0 justify-end pr-4 pl-3">
-            <Skeleton className="h-2.5 w-16" />
-          </div>
-        </div>
-      ))}
+      <Table>
+        <TableHeader>
+          {columns.map((column) => (
+            <TableHead key={column} className={ticketColumns[column].className}>
+              {ticketColumns[column].header}
+            </TableHead>
+          ))}
+        </TableHeader>
+        <tbody>
+          {placeholderRows.map(({ id, titleWidth }) => (
+            <TableRow key={id}>
+              {columns.map((column) => (
+                <TableCell key={column} className={ticketColumns[column].className}>
+                  <Skeleton
+                    className={`h-2.5 ${column === "title" ? titleWidth : placeholderWidths[column]}`}
+                  />
+                </TableCell>
+              ))}
+            </TableRow>
+          ))}
+        </tbody>
+      </Table>
     </div>
   );
 }

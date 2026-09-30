@@ -1,3 +1,5 @@
+import { type Project, roleNames } from "@support-desk/shared";
+import { useLocation } from "react-router";
 import { useProjects } from "../../api/queries.ts";
 import { SidebarLink } from "../../components/SidebarLink.tsx";
 import { SidebarSection } from "../../components/SidebarSection.tsx";
@@ -7,19 +9,22 @@ import { ProjectIcon } from "./ProjectIcon.tsx";
 export function ProjectSwitcher() {
   return (
     <SidebarSection title="Projects">
-      <ProjectLinks />
+      <ProjectList />
     </SidebarSection>
   );
 }
 
-function ProjectLinks() {
+/** Each project with the user's role in it. */
+function ProjectList() {
   const projectsQuery = useProjects();
+  const { pathname } = useLocation();
 
   if (projectsQuery.isPending) {
     return (
       <div className="space-y-3 px-2 py-1.5">
         <Skeleton className="h-3 w-28" />
         <Skeleton className="h-3 w-24" />
+        <Skeleton className="h-3 w-32" />
       </div>
     );
   }
@@ -31,12 +36,32 @@ function ProjectLinks() {
   return (
     <ul className="space-y-px">
       {projectsQuery.data.map((project) => (
-        <li key={project.id}>
-          <SidebarLink to={`/projects/${project.id}`} icon={<ProjectIcon project={project} />}>
-            {project.name}
-          </SidebarLink>
-        </li>
+        <ProjectLinks key={project.id} project={project} pathname={pathname} />
       ))}
     </ul>
+  );
+}
+
+type ProjectLinksProps = {
+  project: Project;
+  pathname: string;
+};
+
+/** The project, highlighted on its pages, with the user's role in it. */
+function ProjectLinks({ project, pathname }: ProjectLinksProps) {
+  const projectPath = `/projects/${project.id}`;
+  const inProject = pathname === projectPath || pathname.startsWith(`${projectPath}/`);
+
+  return (
+    <li className="space-y-px">
+      <SidebarLink
+        to={projectPath}
+        active={inProject}
+        icon={<ProjectIcon project={project} />}
+        trailing={roleNames[project.role]}
+      >
+        {project.name}
+      </SidebarLink>
+    </li>
   );
 }

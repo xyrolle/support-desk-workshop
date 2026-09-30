@@ -65,7 +65,7 @@ export function SelectableTableDemo() {
           </TableHead>
           <TableHead className="w-24">ID</TableHead>
           <TableHead>Title</TableHead>
-          <TableHead className="w-36">Status</TableHead>
+          <TableHead className="w-48">Status</TableHead>
           <TableHead className="w-32">Priority</TableHead>
           <TableHead className="w-48">Assignee</TableHead>
           <TableHead className="w-32 text-right">Updated</TableHead>

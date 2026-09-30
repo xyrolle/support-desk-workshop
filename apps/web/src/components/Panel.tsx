@@ -1,31 +1,33 @@
-import type { ReactNode, Ref } from "react";
+import type { ReactNode } from "react";
 
 type PanelProps = {
-  /** Controls above the content, such as search and filters. */
+  /** Controls above the content, such as sorting. */
   toolbar?: ReactNode;
   /** A strip below the content, such as pagination. */
   footer?: ReactNode;
-  /** Floats over the content without scrolling, such as a SelectionBar. */
+  /** Floats at the bottom of the visible part of the panel, such as a SelectionBar. */
   overlay?: ReactNode;
-  scrollAreaRef?: Ref<HTMLDivElement>;
   children: ReactNode;
 };
 
-/** A bordered box that fills its parent, for a table and its states. The middle scrolls. */
-export function Panel({ toolbar, footer, overlay, scrollAreaRef, children }: PanelProps) {
+/**
+ * A bordered box for a table and its states. It grows with its content and the page
+ * scrolls; `overflow-clip` keeps the rounded corners without breaking sticky headers.
+ */
+export function Panel({ toolbar, footer, overlay, children }: PanelProps) {
   return (
-    <section className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-line bg-canvas">
+    <section className="flex flex-col overflow-clip rounded-lg border border-line bg-canvas">
       {toolbar && (
         <div className="flex h-12 shrink-0 items-center gap-2 border-b border-line px-3">
           {toolbar}
         </div>
       )}
-      <div className="relative flex min-h-0 flex-1 flex-col">
-        <div ref={scrollAreaRef} className="flex min-h-0 flex-1 flex-col overflow-y-auto">
-          {children}
+      <div className="flex min-h-48 flex-col">{children}</div>
+      {overlay && (
+        <div className="pointer-events-none sticky bottom-4 z-20 flex justify-center *:pointer-events-auto">
+          {overlay}
         </div>
-        {overlay}
-      </div>
+      )}
       {footer && <div className="shrink-0 border-t border-line">{footer}</div>}
     </section>
   );

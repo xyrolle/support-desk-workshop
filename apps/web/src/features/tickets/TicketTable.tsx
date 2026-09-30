@@ -1,21 +1,38 @@
 import type { TicketListItem } from "@support-desk/shared";
-import { Table, TableHead, TableHeader } from "../../components/ui/Table.tsx";
-import { TicketRow } from "./TicketRow.tsx";
+import { Table, TableCell, TableHead, TableHeader, TableRow } from "../../components/ui/Table.tsx";
+import { classNames } from "../../lib/class-names.ts";
+import { type TicketColumn, ticketColumns } from "./ticket-columns.tsx";
 
-export function TicketTable({ tickets }: { tickets: TicketListItem[] }) {
+type TicketTableProps = {
+  tickets: TicketListItem[];
+  columns: TicketColumn[];
+};
+
+export function TicketTable({ tickets, columns }: TicketTableProps) {
   return (
     <Table>
       <TableHeader>
-        <TableHead className="w-24">ID</TableHead>
-        <TableHead>Title</TableHead>
-        <TableHead className="w-36">Status</TableHead>
-        <TableHead className="w-32">Priority</TableHead>
-        <TableHead className="w-48">Assignee</TableHead>
-        <TableHead className="w-32 text-right">Updated</TableHead>
+        {columns.map((column) => (
+          <TableHead key={column} className={ticketColumns[column].className}>
+            {ticketColumns[column].header}
+          </TableHead>
+        ))}
       </TableHeader>
       <tbody>
         {tickets.map((ticket) => (
-          <TicketRow key={ticket.id} ticket={ticket} />
+          <TableRow key={ticket.id} className="relative cursor-pointer">
+            {columns.map((column) => (
+              <TableCell
+                key={column}
+                className={classNames(
+                  ticketColumns[column].className,
+                  ticketColumns[column].cellClassName,
+                )}
+              >
+                {ticketColumns[column].render(ticket)}
+              </TableCell>
+            ))}
+          </TableRow>
         ))}
       </tbody>
     </Table>

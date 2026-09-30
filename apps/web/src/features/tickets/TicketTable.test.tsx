@@ -1,65 +1,47 @@
-import type { TicketListItem } from "@support-desk/shared";
-import { render, screen } from "@testing-library/react";
+import { screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
+import { buildTicket } from "../../test/fixtures.ts";
+import { renderPage } from "../../test/render.tsx";
 import { TicketTable } from "./TicketTable.tsx";
 
-function buildTicket(overrides: Partial<TicketListItem> = {}): TicketListItem {
-  return {
-    id: "CHK-101",
-    projectId: "checkout",
-    title: "Apple Pay sheet closes without charging on Safari 18",
-    status: "in_progress",
-    priority: "urgent",
-    assignee: {
-      id: "diego-alvarez",
-      name: "Diego Alvarez",
-      initials: "DA",
-      email: "diego.alvarez@brightcart.example",
-      avatarColor: "amber",
-    },
-    requester: {
-      id: 1,
-      name: "Anna Berg",
-      email: "anna@northgateoutfitters.example",
-      organization: {
-        id: "northgate-outfitters",
-        name: "Northgate Outfitters",
-        tier: "enterprise",
-      },
-    },
-    labels: [{ id: 4, name: "Payments", color: "green" }],
-    createdAt: "2026-09-28T09:00:00.000Z",
-    updatedAt: "2026-09-29T07:00:00.000Z",
-    firstRespondedAt: "2026-09-28T09:40:00.000Z",
-    resolvedAt: null,
-    ...overrides,
-  };
+function renderTable(tickets = [buildTicket()]) {
+  return renderPage(
+    <TicketTable
+      tickets={tickets}
+      columns={["id", "title", "customer", "status", "priority", "assignee", "updated"]}
+    />,
+    { path: "/", url: "/" },
+  );
 }
 
 describe("TicketTable", () => {
-  it("shows the id, title, status, priority and assignee of each ticket", () => {
-    render(<TicketTable tickets={[buildTicket()]} />);
+  it("shows the chosen columns for each ticket", () => {
+    renderTable();
 
-    expect(screen.getByText("CHK-101")).toBeInTheDocument();
-    expect(
-      screen.getByText("Apple Pay sheet closes without charging on Safari 18"),
-    ).toBeInTheDocument();
-    expect(screen.getByText("In progress")).toBeInTheDocument();
-    expect(screen.getByText("Urgent")).toBeInTheDocument();
-    expect(screen.getByText("Diego Alvarez")).toBeInTheDocument();
+    const row = screen.getAllByRole("row")[1];
+    if (!row) {
+      throw new Error("The table has no ticket row.");
+    }
+    expect(within(row).getByText("CHK-196")).toBeInTheDocument();
+    expect(within(row).getByText("Atlas Sports Group")).toBeInTheDocument();
+    expect(within(row).getByText("In progress")).toBeInTheDocument();
+    expect(within(row).getByText("Urgent")).toBeInTheDocument();
+    expect(within(row).getByText("Diego Alvarez")).toBeInTheDocument();
   });
 
-  it("renders one row per ticket below the header row", () => {
-    const tickets = [buildTicket({ id: "CHK-101" }), buildTicket({ id: "CHK-102" })];
+  it("links each title to its ticket", () => {
+    renderTable();
 
-    render(<TicketTable tickets={tickets} />);
-
-    expect(screen.getAllByRole("row")).toHaveLength(3);
+    expect(screen.getByRole("link", { name: /Customers charged twice/ })).toHaveAttribute(
+      "href",
+      "/projects/checkout/tickets/CHK-196",
+    );
   });
 
-  it("says Unassigned when a ticket has no assignee", () => {
-    render(<TicketTable tickets={[buildTicket({ assignee: null })]} />);
+  it("names the waiting status plainly and says Unassigned when nobody has the ticket", () => {
+    renderTable([buildTicket({ status: "blocked", assignee: null })]);
 
+    expect(screen.getByText("Waiting on customer")).toBeInTheDocument();
     expect(screen.getByText("Unassigned")).toBeInTheDocument();
   });
 });

@@ -2,8 +2,8 @@ import type { ComponentProps, ReactNode } from "react";
 import { classNames } from "../../lib/class-names.ts";
 
 /**
- * The parts of a data table: 40px rows on hairlines, under a sticky 36px header.
- * Put it inside a Panel, which scrolls the rows.
+ * The parts of a data table: 40px rows on hairlines, under a 36px header that sticks
+ * below the page's TopBar while the page scrolls. Put it inside a Panel.
  */
 export function Table({ children }: { children: ReactNode }) {
   return <table className="w-full table-fixed border-separate border-spacing-0">{children}</table>;
@@ -12,7 +12,7 @@ export function Table({ children }: { children: ReactNode }) {
 /** The header row. Its children are TableHead cells. */
 export function TableHeader({ children }: { children: ReactNode }) {
   return (
-    <thead className="sticky top-0 z-10 bg-surface-subtle">
+    <thead className="sticky top-12 z-10 bg-surface-subtle">
       <tr>{children}</tr>
     </thead>
   );

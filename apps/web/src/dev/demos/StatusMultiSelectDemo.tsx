@@ -10,7 +10,7 @@ export function StatusMultiSelectDemo() {
 
   return (
     <Select multiple value={statuses} onValueChange={setStatuses}>
-      <SelectTrigger aria-label="Statuses" className="w-48">
+      <SelectTrigger aria-label="Statuses" className="w-64">
         <span className="flex gap-0.5">
           {statuses.map((status) => (
             <StatusIcon key={status} status={status} />
