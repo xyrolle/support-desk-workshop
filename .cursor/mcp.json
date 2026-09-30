@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "support-desk": {
+      "command": "node",
+      "args": ["apps/mcp/src/server.ts"]
+    }
+  }
+}

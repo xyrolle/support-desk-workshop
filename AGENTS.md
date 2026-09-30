@@ -32,6 +32,15 @@ hidden from her. `DEMO_USER_ID=ravi-patel npm run dev` shows the app as a viewer
 After editing `apps/api/src/db/schema.ts`, create a migration with
 `npm run db:generate -w @support-desk/api -- --name <change>`, then run `npm run db:seed`.
 
+## MCP
+
+`apps/mcp` (`@support-desk/mcp`) is a read-only MCP server registered as `support-desk` in
+`.cursor/mcp.json` (`node apps/mcp/src/server.ts`). It calls the HTTP API as the demo user
+and never opens the database, so the access policy still applies. Start the API with
+`npm run dev` first. The MCP server reads `SUPPORT_DESK_API_URL`, the API base URL it calls
+(default `http://localhost:8787/api`). Tools: `search_tickets`, `get_ticket`, `list_sla_risks`. Stdout is the
+protocol, so logs go to stderr.
+
 ## Architecture
 
 ```
@@ -47,6 +56,7 @@ apps/api/src/
   modules/<name>/        <name>.routes.ts → <name>.service.ts → <name>.repository.ts, tests
                          projects, members, users, labels, tickets, comments, activity, customers
   modules/reports/       LEGACY volume report (see below)
+apps/mcp/src/            read-only MCP server: stdio tools over the HTTP API
 apps/web/src/
   api/                   client.ts (typed fetch), queries.ts and mutations.ts (TanStack Query hooks)
   features/<name>/       pages and components for one feature: my-tickets, tickets (lists),

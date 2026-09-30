@@ -2,6 +2,9 @@ import { defineConfig } from "vitest/config";
 
 export default defineConfig({
   test: {
-    projects: ["packages/shared", "apps/api", "apps/web", "apps/mcp"],
+    name: "mcp",
+    environment: "node",
+    restoreMocks: true,
+    unstubGlobals: true,
   },
 });
