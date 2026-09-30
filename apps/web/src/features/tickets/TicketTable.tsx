@@ -1,7 +1,7 @@
-import type { Ticket } from "@support-desk/shared";
+import type { TicketListItem } from "@support-desk/shared";
 import { TicketRow } from "./TicketRow.tsx";
 
-export function TicketTable({ tickets }: { tickets: Ticket[] }) {
+export function TicketTable({ tickets }: { tickets: TicketListItem[] }) {
   return (
     <table className="w-full table-fixed border-collapse">
       <thead className="sticky top-0 z-10 bg-canvas">
@@ -12,7 +12,7 @@ export function TicketTable({ tickets }: { tickets: Ticket[] }) {
           <th scope="col" className="px-3 py-2.5 font-medium">
             Title
           </th>
-          <th scope="col" className="w-36 px-3 py-2.5 font-medium">
+          <th scope="col" className="w-48 px-3 py-2.5 font-medium">
             Status
           </th>
           <th scope="col" className="w-32 px-3 py-2.5 font-medium">

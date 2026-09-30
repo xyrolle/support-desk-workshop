@@ -1,6 +1,5 @@
-import type { TicketStatus } from "@support-desk/shared";
+import { statusNames, type TicketStatus } from "@support-desk/shared";
 import { classNames } from "../../lib/class-names.ts";
-import { statusLabels } from "./ticket-labels.ts";
 
 const statusClasses: Record<TicketStatus, { badge: string; dot: string }> = {
   open: {
@@ -17,6 +16,11 @@ const statusClasses: Record<TicketStatus, { badge: string; dot: string }> = {
     badge:
       "bg-rose-50 text-rose-700 ring-rose-600/15 dark:bg-rose-400/10 dark:text-rose-300 dark:ring-rose-400/20",
     dot: "bg-rose-500",
+  },
+  resolved: {
+    badge:
+      "bg-emerald-50 text-emerald-700 ring-emerald-600/15 dark:bg-emerald-400/10 dark:text-emerald-300 dark:ring-emerald-400/20",
+    dot: "bg-emerald-500",
   },
   closed: {
     badge:
@@ -36,7 +40,7 @@ export function StatusBadge({ status }: { status: TicketStatus }) {
       )}
     >
       <span aria-hidden="true" className={classNames("size-1.5 rounded-full", classes.dot)} />
-      {statusLabels[status]}
+      {statusNames[status]}
     </span>
   );
 }

@@ -1,55 +1,166 @@
-import type { Ticket, User } from "@support-desk/shared";
-import { count, desc, eq, type SQL } from "drizzle-orm";
+import {
+  type Label,
+  type TicketDetail,
+  type TicketListItem,
+  type TicketListQuery,
+  type TicketSort,
+  type TicketStatus,
+  ticketPriorities,
+  type User,
+} from "@support-desk/shared";
+import { and, asc, count, desc, eq, inArray, type SQL, sql } from "drizzle-orm";
+import type { SQLiteColumn } from "drizzle-orm/sqlite-core";
 import type { AppDatabase } from "../../db/client.ts";
-import { type TicketRow, tickets, users } from "../../db/schema.ts";
+import {
+  type ContactRow,
+  contacts,
+  type OrganizationRow,
+  organizations,
+  type TicketRow,
+  tickets,
+  users,
+} from "../../db/schema.ts";
 import type { PageRange } from "../../http/pagination.ts";
+import { findLabelsOfTickets } from "../labels/labels.repository.ts";
 
 export type TicketFilter = {
-  projectId: string;
+  /** Required, so a list can only ever show tickets from projects the user can see. */
+  projectIds: string[];
+  assigneeId?: string;
+  statuses?: readonly TicketStatus[];
+};
+
+export type TicketOrder = Pick<TicketListQuery, "sort" | "direction">;
+
+type TicketQueryRow = {
+  ticket: TicketRow;
+  assignee: User | null;
+  requester: ContactRow;
+  organization: OrganizationRow;
 };
 
 export function findTickets(
   database: AppDatabase,
   filter: TicketFilter,
+  order: TicketOrder,
   range: PageRange,
-): Ticket[] {
-  const rows = database
-    .select({ ticket: tickets, assignee: users })
-    .from(tickets)
-    .leftJoin(users, eq(tickets.assigneeId, users.id))
+): TicketListItem[] {
+  const rows = selectTickets(database)
     .where(matchesFilter(filter))
-    .orderBy(desc(tickets.updatedAt), desc(tickets.id))
+    .orderBy(...orderBy(order))
     .limit(range.limit)
     .offset(range.offset)
     .all();
 
-  return rows.map(toTicket);
+  const labelsByTicket = findLabelsOfTickets(
+    database,
+    rows.map((row) => row.ticket.id),
+  );
+  return rows.map((row) => toListItem(row, labelsByTicket.get(row.ticket.id) ?? []));
 }
 
+/** Uses the same filter as `findTickets`, so the count always matches the list. */
 export function countTickets(database: AppDatabase, filter: TicketFilter): number {
   const result = database
     .select({ total: count() })
     .from(tickets)
+    .innerJoin(contacts, eq(contacts.id, tickets.requesterId))
     .where(matchesFilter(filter))
     .get();
 
   return result?.total ?? 0;
 }
 
-function matchesFilter(filter: TicketFilter): SQL {
-  return eq(tickets.projectId, filter.projectId);
+export function findTicket(
+  database: AppDatabase,
+  projectId: string,
+  ticketId: string,
+): TicketDetail | undefined {
+  const row = selectTickets(database)
+    .where(and(eq(tickets.projectId, projectId), eq(tickets.id, ticketId)))
+    .get();
+  if (!row) {
+    return undefined;
+  }
+
+  const labels = findLabelsOfTickets(database, [row.ticket.id]).get(row.ticket.id) ?? [];
+  return { ...toListItem(row, labels), description: row.ticket.description };
 }
 
-function toTicket(row: { ticket: TicketRow; assignee: User | null }): Ticket {
+export function findTicketRow(
+  database: AppDatabase,
+  projectId: string,
+  ticketId: string,
+): TicketRow | undefined {
+  return database
+    .select()
+    .from(tickets)
+    .where(and(eq(tickets.projectId, projectId), eq(tickets.id, ticketId)))
+    .get();
+}
+
+export type TicketUpdate = Partial<
+  Pick<TicketRow, "status" | "priority" | "assigneeId" | "firstRespondedAt" | "resolvedAt">
+> & { updatedAt: string };
+
+export function updateTicketRow(database: AppDatabase, ticketId: string, update: TicketUpdate) {
+  database.update(tickets).set(update).where(eq(tickets.id, ticketId)).run();
+}
+
+function selectTickets(database: AppDatabase) {
+  return database
+    .select({ ticket: tickets, assignee: users, requester: contacts, organization: organizations })
+    .from(tickets)
+    .leftJoin(users, eq(users.id, tickets.assigneeId))
+    .innerJoin(contacts, eq(contacts.id, tickets.requesterId))
+    .innerJoin(organizations, eq(organizations.id, contacts.organizationId));
+}
+
+function matchesFilter(filter: TicketFilter): SQL | undefined {
+  return and(
+    inArray(tickets.projectId, filter.projectIds),
+    filter.assigneeId ? eq(tickets.assigneeId, filter.assigneeId) : undefined,
+    filter.statuses ? inArray(tickets.status, [...filter.statuses]) : undefined,
+  );
+}
+
+/** Sorts by rank (low = 0 … urgent = 3) rather than alphabetically. */
+function priorityRank(): SQL {
+  const ranks = ticketPriorities.map((priority, rank) => sql`when ${priority} then ${rank}`);
+  return sql`case ${tickets.priority} ${sql.join(ranks, sql` `)} end`;
+}
+
+const sortColumns: Record<TicketSort, SQLiteColumn | SQL> = {
+  updated: tickets.updatedAt,
+  created: tickets.createdAt,
+  priority: priorityRank(),
+};
+
+/** Ties go to the most recently updated ticket, then the id, so pages never overlap. */
+function orderBy({ sort, direction }: TicketOrder): SQL[] {
+  const inDirection = direction === "asc" ? asc : desc;
+  return [inDirection(sortColumns[sort]), desc(tickets.updatedAt), asc(tickets.id)];
+}
+
+function toListItem(row: TicketQueryRow, labels: Label[]): TicketListItem {
+  const { ticket, requester, organization } = row;
   return {
-    id: row.ticket.id,
-    projectId: row.ticket.projectId,
-    title: row.ticket.title,
-    description: row.ticket.description,
-    status: row.ticket.status,
-    priority: row.ticket.priority,
+    id: ticket.id,
+    projectId: ticket.projectId,
+    title: ticket.title,
+    status: ticket.status,
+    priority: ticket.priority,
     assignee: row.assignee,
-    createdAt: row.ticket.createdAt,
-    updatedAt: row.ticket.updatedAt,
+    requester: {
+      id: requester.id,
+      name: requester.name,
+      email: requester.email,
+      organization: { id: organization.id, name: organization.name, tier: organization.tier },
+    },
+    labels,
+    createdAt: ticket.createdAt,
+    updatedAt: ticket.updatedAt,
+    firstRespondedAt: ticket.firstRespondedAt,
+    resolvedAt: ticket.resolvedAt,
   };
 }

@@ -14,13 +14,6 @@ export class HttpError extends Error {
   }
 }
 
-export class NotFoundError extends HttpError {
-  constructor(message: string) {
-    super(404, "not_found", message);
-    this.name = "NotFoundError";
-  }
-}
-
 export class ValidationError extends HttpError {
   constructor(message: string) {
     super(400, "validation_error", message);
@@ -28,7 +21,31 @@ export class ValidationError extends HttpError {
   }
 }
 
-export function errorResponse(code: ErrorCode, message: string): ErrorResponse {
+/** The user may see the resource but not do this to it. */
+export class ForbiddenError extends HttpError {
+  constructor(message: string) {
+    super(403, "forbidden", message);
+    this.name = "ForbiddenError";
+  }
+}
+
+/** Missing, or hidden from the user: both look the same from outside. */
+export class NotFoundError extends HttpError {
+  constructor(message: string) {
+    super(404, "not_found", message);
+    this.name = "NotFoundError";
+  }
+}
+
+/** The request is valid but clashes with the current state, like removing the last admin. */
+export class ConflictError extends HttpError {
+  constructor(message: string) {
+    super(409, "conflict", message);
+    this.name = "ConflictError";
+  }
+}
+
+function errorResponse(code: ErrorCode, message: string): ErrorResponse {
   return { error: { code, message } };
 }
 

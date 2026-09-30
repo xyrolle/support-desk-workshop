@@ -1,6 +1,12 @@
 import { z } from "zod";
 
-export const errorCodes = ["validation_error", "not_found", "internal_error"] as const;
+export const errorCodes = [
+  "validation_error",
+  "not_found",
+  "forbidden",
+  "conflict",
+  "internal_error",
+] as const;
 
 export const errorCodeSchema = z.enum(errorCodes);
 

@@ -1,4 +1,3 @@
-import { userSchema } from "@support-desk/shared";
 import { describe, expect, it, vi } from "vitest";
 import { createTestApp, getJson } from "./test/test-app.ts";
 
@@ -9,14 +8,6 @@ describe("app", () => {
     const response = await getJson(app, "/api/health");
 
     expect(response).toEqual({ status: 200, body: { status: "ok" } });
-  });
-
-  it("returns the demo user from /api/me", async () => {
-    const { app } = createTestApp();
-
-    const response = await getJson(app, "/api/me");
-
-    expect(userSchema.parse(response.body).name).toBe("Maya Chen");
   });
 
   it("answers unknown routes with the standard error body", async () => {

@@ -4,10 +4,8 @@ import { getProject, listProjects } from "./projects.service.ts";
 
 export const projectRoutes = new Hono<AppEnv>()
   .get("/", (c) => {
-    const projects = listProjects(c.var.database, c.var.currentUser);
-    return c.json(projects);
+    return c.json(listProjects(c.var.context));
   })
   .get("/:projectId", (c) => {
-    const project = getProject(c.var.database, c.var.currentUser, c.req.param("projectId"));
-    return c.json(project);
+    return c.json(getProject(c.var.context, c.req.param("projectId")));
   });

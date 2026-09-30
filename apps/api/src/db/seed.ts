@@ -1,46 +1,70 @@
 import type { AppDatabase } from "./client.ts";
-import { projectMembers, projects, type TicketRow, tickets, users } from "./schema.ts";
-import { checkoutTickets } from "./seed-data/checkout-tickets.ts";
-import { internalToolsTickets } from "./seed-data/internal-tools-tickets.ts";
-import { mobileAppTickets } from "./seed-data/mobile-app-tickets.ts";
-import { seedProjectMembers, seedProjects } from "./seed-data/projects.ts";
-import type { SeedTicket } from "./seed-data/seed-ticket.ts";
-import { seedUsers } from "./seed-data/users.ts";
-
-const MILLISECONDS_PER_HOUR = 60 * 60 * 1000;
-
-const seedTicketsByProject: Record<string, SeedTicket[]> = {
-  checkout: checkoutTickets,
-  "mobile-app": mobileAppTickets,
-  "internal-tools": internalToolsTickets,
-};
+import { inTransaction } from "./client.ts";
+import {
+  comments,
+  contacts,
+  labels,
+  organizations,
+  projectMembers,
+  projects,
+  ticketEvents,
+  ticketLabels,
+  tickets,
+  users,
+} from "./schema.ts";
+import { buildSeedData } from "./seed/build-seed-data.ts";
 
 export type SeedSummary = {
   users: number;
-  projects: number;
+  organizations: number;
   tickets: number;
+  comments: number;
 };
 
+/** SQLite limits the number of values in one statement, so large inserts go in batches. */
+const ROWS_PER_INSERT = 500;
+
 /**
- * Replaces all data with the demo data set. Timestamps are relative to
- * `referenceDate`, so tests can pass a fixed date and get identical data.
+ * Replaces all data with the demo data. Timestamps are relative to
+ * `referenceDate`, so tests pass a fixed date and always get identical data.
  */
 export function seedDatabase(database: AppDatabase, referenceDate = new Date()): SeedSummary {
-  const ticketRows = buildTicketRows(referenceDate);
+  const data = buildSeedData(referenceDate);
 
-  database.transaction((transaction) => {
-    transaction.delete(tickets).run();
-    transaction.delete(projectMembers).run();
-    transaction.delete(projects).run();
-    transaction.delete(users).run();
+  inTransaction(database, () => {
+    for (const table of [
+      ticketEvents,
+      comments,
+      ticketLabels,
+      tickets,
+      labels,
+      contacts,
+      organizations,
+      projectMembers,
+      projects,
+      users,
+    ]) {
+      database.delete(table).run();
+    }
 
-    transaction.insert(users).values(seedUsers).run();
-    transaction.insert(projects).values(seedProjects).run();
-    transaction.insert(projectMembers).values(seedProjectMembers).run();
-    transaction.insert(tickets).values(ticketRows).run();
+    insertInBatches(database, users, data.users);
+    insertInBatches(database, projects, data.projects);
+    insertInBatches(database, projectMembers, data.projectMembers);
+    insertInBatches(database, organizations, data.organizations);
+    insertInBatches(database, contacts, data.contacts);
+    insertInBatches(database, labels, data.labels);
+    insertInBatches(database, tickets, data.tickets);
+    insertInBatches(database, ticketLabels, data.ticketLabels);
+    insertInBatches(database, comments, data.comments);
+    insertInBatches(database, ticketEvents, data.ticketEvents);
   });
 
-  return { users: seedUsers.length, projects: seedProjects.length, tickets: ticketRows.length };
+  return {
+    users: data.users.length,
+    organizations: data.organizations.length,
+    tickets: data.tickets.length,
+    comments: data.comments.length,
+  };
 }
 
 export function isDatabaseEmpty(database: AppDatabase): boolean {
@@ -48,26 +72,27 @@ export function isDatabaseEmpty(database: AppDatabase): boolean {
   return anyUser === undefined;
 }
 
-function buildTicketRows(referenceDate: Date): TicketRow[] {
-  return Object.entries(seedTicketsByProject).flatMap(([projectId, seedTickets]) =>
-    seedTickets.map((seedTicket) => toTicketRow(seedTicket, projectId, referenceDate)),
-  );
-}
+type SeedTable =
+  | typeof users
+  | typeof projects
+  | typeof projectMembers
+  | typeof organizations
+  | typeof contacts
+  | typeof labels
+  | typeof tickets
+  | typeof ticketLabels
+  | typeof comments
+  | typeof ticketEvents;
 
-function toTicketRow(seedTicket: SeedTicket, projectId: string, referenceDate: Date): TicketRow {
-  return {
-    id: seedTicket.id,
-    projectId,
-    title: seedTicket.title,
-    description: seedTicket.description,
-    status: seedTicket.status,
-    priority: seedTicket.priority,
-    assigneeId: seedTicket.assigneeId,
-    createdAt: hoursBefore(referenceDate, seedTicket.createdDaysAgo * 24),
-    updatedAt: hoursBefore(referenceDate, seedTicket.updatedHoursAgo),
-  };
-}
-
-function hoursBefore(date: Date, hours: number): string {
-  return new Date(date.getTime() - hours * MILLISECONDS_PER_HOUR).toISOString();
+function insertInBatches<Table extends SeedTable>(
+  database: AppDatabase,
+  table: Table,
+  rows: Table["$inferInsert"][],
+): void {
+  for (let start = 0; start < rows.length; start += ROWS_PER_INSERT) {
+    database
+      .insert(table)
+      .values(rows.slice(start, start + ROWS_PER_INSERT))
+      .run();
+  }
 }

@@ -1,19 +1,37 @@
-import type { Ticket } from "@support-desk/shared";
+import type { TicketListItem } from "@support-desk/shared";
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { TicketTable } from "./TicketTable.tsx";
 
-function buildTicket(overrides: Partial<Ticket> = {}): Ticket {
+function buildTicket(overrides: Partial<TicketListItem> = {}): TicketListItem {
   return {
     id: "CHK-101",
     projectId: "checkout",
     title: "Apple Pay sheet closes without charging on Safari 18",
-    description: "Customers on Safari 18.1 see the Apple Pay sheet open and immediately dismiss.",
     status: "in_progress",
     priority: "urgent",
-    assignee: { id: "diego-alvarez", name: "Diego Alvarez", initials: "DA", avatarColor: "amber" },
-    createdAt: "2026-03-01T09:00:00.000Z",
-    updatedAt: "2026-03-02T07:00:00.000Z",
+    assignee: {
+      id: "diego-alvarez",
+      name: "Diego Alvarez",
+      initials: "DA",
+      email: "diego.alvarez@brightcart.example",
+      avatarColor: "amber",
+    },
+    requester: {
+      id: 1,
+      name: "Anna Berg",
+      email: "anna@northgateoutfitters.example",
+      organization: {
+        id: "northgate-outfitters",
+        name: "Northgate Outfitters",
+        tier: "enterprise",
+      },
+    },
+    labels: [{ id: 4, name: "Payments", color: "green" }],
+    createdAt: "2026-09-28T09:00:00.000Z",
+    updatedAt: "2026-09-29T07:00:00.000Z",
+    firstRespondedAt: "2026-09-28T09:40:00.000Z",
+    resolvedAt: null,
     ...overrides,
   };
 }

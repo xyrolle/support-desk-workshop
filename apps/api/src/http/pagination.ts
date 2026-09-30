@@ -1,6 +1,6 @@
 import type { Page } from "@support-desk/shared";
 
-export const PAGE_SIZE = 20;
+export const PAGE_SIZE = 25;
 
 export type PageRange = {
   limit: number;

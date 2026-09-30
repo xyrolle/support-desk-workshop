@@ -1,11 +1,11 @@
-import type { Project, User } from "@support-desk/shared";
-import { listAccessibleProjects, requireProjectAccess } from "../../auth/access.ts";
-import type { AppDatabase } from "../../db/client.ts";
+import type { Project } from "@support-desk/shared";
+import { authorize, listVisibleProjects } from "../../auth/policy.ts";
+import type { RequestContext } from "../../request-context.ts";
 
-export function listProjects(database: AppDatabase, user: User): Project[] {
-  return listAccessibleProjects(database, user);
+export function listProjects(context: RequestContext): Project[] {
+  return listVisibleProjects(context);
 }
 
-export function getProject(database: AppDatabase, user: User, projectId: string): Project {
-  return requireProjectAccess(database, user, projectId);
+export function getProject(context: RequestContext, projectId: string): Project {
+  return authorize(context, projectId);
 }
