@@ -12,7 +12,7 @@ import {
   tickets,
   users,
 } from "./schema.ts";
-import { buildSeedData } from "./seed/build-seed-data.ts";
+import { seedDataFor } from "./seed/seed-date.ts";
 
 export type SeedSummary = {
   users: number;
@@ -25,11 +25,11 @@ export type SeedSummary = {
 const ROWS_PER_INSERT = 500;
 
 /**
- * Replaces all data with the demo data. Timestamps are relative to
- * `referenceDate`, so tests pass a fixed date and always get identical data.
+ * Replaces all data with the demo data as of `now`. Every copy gets the same tickets
+ * and ids whatever day it runs (see `SEED_DATE`); tests seed at `SEED_DATE` itself.
  */
-export function seedDatabase(database: AppDatabase, referenceDate = new Date()): SeedSummary {
-  const data = buildSeedData(referenceDate);
+export function seedDatabase(database: AppDatabase, now = new Date()): SeedSummary {
+  const data = seedDataFor(now);
 
   inTransaction(database, () => {
     for (const table of [

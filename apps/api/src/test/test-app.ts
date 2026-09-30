@@ -1,12 +1,13 @@
 import { createApp } from "../app.ts";
 import { type AppDatabase, IN_MEMORY_DATABASE, openDatabase } from "../db/client.ts";
+import { SEED_DATE } from "../db/seed/seed-date.ts";
 import { seedDatabase } from "../db/seed.ts";
 import type { Clock } from "../lib/dates.ts";
 import { findUserById } from "../modules/users/users.repository.ts";
 import type { RequestContext } from "../request-context.ts";
 
-/** The seed's timestamps are relative to this date, and the test clock always says it is now. */
-export const TEST_NOW = new Date("2026-09-29T13:00:00.000Z");
+/** Tests run at the seed date: the data is exactly as built, and the test clock always says it is now. */
+export const TEST_NOW = SEED_DATE;
 
 /** Maya Chen: admin of Checkout, agent in Mobile App and Internal Tools, not in Billing. */
 export const DEMO_USER_ID = "maya-chen";

@@ -22,7 +22,8 @@ import {
   tickets,
   users,
 } from "./schema.ts";
-import { buildSeedData } from "./seed/build-seed-data.ts";
+import { buildSeedData, type SeedData } from "./seed/build-seed-data.ts";
+import { SEED_DATE, seedDataFor } from "./seed/seed-date.ts";
 import { seedDatabase } from "./seed.ts";
 
 let database: AppDatabase;
@@ -185,6 +186,38 @@ describe("seedDatabase", () => {
 
   it("builds exactly the same data from the same date", () => {
     expect(buildSeedData(TEST_NOW)).toEqual(buildSeedData(TEST_NOW));
+  });
+
+  it("gives every copy the same tickets and ids, whatever day it is seeded", () => {
+    const withoutTimes = (data: SeedData) =>
+      data.tickets.map(({ id, status, priority, assigneeId, requesterId, title }) => ({
+        id,
+        status,
+        priority,
+        assigneeId,
+        requesterId,
+        title,
+      }));
+    const onTheSeedDate = withoutTimes(seedDataFor(SEED_DATE));
+
+    for (const now of [
+      "2026-09-30T06:30:00.000Z", // the next morning, before the seed date's time of day
+      "2026-10-04T15:00:00.000Z", // a Sunday
+      "2026-10-26T09:00:00.000Z", // after Europe's clocks go back
+      "2026-09-20T12:00:00.000Z", // before the seed date
+    ]) {
+      expect(withoutTimes(seedDataFor(new Date(now)))).toEqual(onTheSeedDate);
+    }
+  });
+
+  it("looks just as recent whenever it is seeded", () => {
+    const now = new Date("2026-09-30T06:30:00.000Z");
+    const latestUpdate = (data: SeedData) =>
+      Math.max(...data.tickets.map((ticket) => Date.parse(ticket.updatedAt)));
+
+    expect(now.getTime() - latestUpdate(seedDataFor(now))).toBe(
+      SEED_DATE.getTime() - latestUpdate(seedDataFor(SEED_DATE)),
+    );
   });
 
   it("replaces the data when it runs again", () => {
