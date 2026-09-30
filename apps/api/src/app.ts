@@ -5,6 +5,7 @@ import type { AppEnv } from "./http/app-env.ts";
 import { handleError, handleNotFound } from "./http/errors.ts";
 import type { Clock } from "./lib/dates.ts";
 import { activityRoutes } from "./modules/activity/activity.routes.ts";
+import { commentRoutes } from "./modules/comments/comments.routes.ts";
 import { labelRoutes } from "./modules/labels/labels.routes.ts";
 import { memberRoutes } from "./modules/members/members.routes.ts";
 import { projectRoutes } from "./modules/projects/projects.routes.ts";
@@ -29,6 +30,7 @@ export function createApp(options: AppOptions) {
   app.route("/api/projects", memberRoutes);
   app.route("/api/projects", labelRoutes);
   app.route("/api/projects", ticketRoutes);
+  app.route("/api/projects", commentRoutes);
   app.route("/api/projects", activityRoutes);
 
   app.notFound(handleNotFound);
