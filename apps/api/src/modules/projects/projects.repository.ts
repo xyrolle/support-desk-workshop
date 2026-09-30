@@ -1,5 +1,5 @@
 import type { ProjectRole } from "@support-desk/shared";
-import { and, asc, eq, getTableColumns } from "drizzle-orm";
+import { and, asc, eq, getTableColumns, inArray } from "drizzle-orm";
 import type { AppDatabase } from "../../db/client.ts";
 import { type ProjectRow, projectMembers, projects } from "../../db/schema.ts";
 
@@ -21,6 +21,27 @@ export function findMemberProjects(database: AppDatabase, userId: string): Membe
     .where(eq(projectMembers.userId, userId))
     .orderBy(asc(projects.name))
     .all();
+}
+
+/** Time zone of each project, for clocks that are counted in business hours. */
+export function findProjectTimeZones(
+  database: AppDatabase,
+  projectIds: string[],
+): Map<string, string> {
+  const timeZones = new Map<string, string>();
+  if (projectIds.length === 0) {
+    return timeZones;
+  }
+
+  const rows = database
+    .select({ id: projects.id, timeZone: projects.timeZone })
+    .from(projects)
+    .where(inArray(projects.id, projectIds))
+    .all();
+  for (const row of rows) {
+    timeZones.set(row.id, row.timeZone);
+  }
+  return timeZones;
 }
 
 export function findMemberProject(

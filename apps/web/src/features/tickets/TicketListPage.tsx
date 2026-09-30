@@ -35,6 +35,11 @@ export function TicketListPage() {
   const ticketsQuery = useTickets(projectId, query);
   const projectLabel = useProjectLabel(projectId);
   const filtered = filtersAreActive(query);
+  const narrowed = filtered || query.sla === "at_risk";
+
+  function clearFilters() {
+    changeQuery({ ...clearedFilters, sla: undefined });
+  }
 
   if (projectQuery.isError) {
     return (
@@ -78,8 +83,9 @@ export function TicketListPage() {
               <FilterBar
                 projectId={projectId}
                 filters={query}
+                sla={query.sla}
                 onChange={changeQuery}
-                onClear={() => changeQuery(clearedFilters)}
+                onClear={clearFilters}
               />
               {filtered && (
                 <SaveViewDialog projectId={projectId} filters={ticketFiltersOf(query)} />
@@ -87,13 +93,11 @@ export function TicketListPage() {
             </>
           }
           empty={
-            filtered
+            narrowed
               ? {
                   title: "No tickets match these filters",
                   description: "Every ticket in this project is hidden by the current filters.",
-                  action: (
-                    <Button onClick={() => changeQuery(clearedFilters)}>Clear filters</Button>
-                  ),
+                  action: <Button onClick={clearFilters}>Clear filters</Button>,
                 }
               : {
                   title: "No tickets yet",

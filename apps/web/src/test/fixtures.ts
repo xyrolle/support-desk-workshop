@@ -66,6 +66,11 @@ export function buildTicket(overrides: Partial<TicketListItem> = {}): TicketList
     updatedAt: "2026-09-29T11:30:00.000Z",
     firstRespondedAt: "2026-09-27T18:31:00.000Z",
     resolvedAt: null,
+    sla: {
+      measuredAt: "2026-09-29T13:00:00.000Z",
+      firstResponse: { state: "met", targetMinutes: 60, elapsedMinutes: 0 },
+      resolution: { state: "running", targetMinutes: 540, elapsedMinutes: 400 },
+    },
     ...overrides,
   };
 }

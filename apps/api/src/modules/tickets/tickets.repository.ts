@@ -58,21 +58,22 @@ type TicketQueryRow = {
   snippet: string | null;
 };
 
+/** A ticket row before its SLA clocks are measured. */
+export type TicketWithoutSla = Omit<TicketListItem, "sla">;
+
 export function findTickets(
   database: AppDatabase,
   filter: TicketFilter,
   order: TicketOrder,
-  range: PageRange,
-): TicketListItem[] {
-  const rows = selectTickets(
+  range?: PageRange,
+): TicketWithoutSla[] {
+  const query = selectTickets(
     database,
     typeof filter.search === "string" ? filter.search : undefined,
   )
     .where(matchesFilter(database, filter))
-    .orderBy(...orderBy(order, filter.search))
-    .limit(range.limit)
-    .offset(range.offset)
-    .all();
+    .orderBy(...orderBy(order, filter.search));
+  const rows = (range ? query.limit(range.limit).offset(range.offset) : query).all();
 
   const labelsByTicket = findLabelsOfTickets(
     database,
@@ -97,7 +98,7 @@ export function findTicket(
   database: AppDatabase,
   projectId: string,
   ticketId: string,
-): TicketDetail | undefined {
+): Omit<TicketDetail, "sla"> | undefined {
   const row = selectTickets(database)
     .where(and(eq(tickets.projectId, projectId), eq(tickets.id, ticketId)))
     .get();
@@ -257,7 +258,7 @@ function relevanceRank(search: string): SQL {
   )`;
 }
 
-function toListItem(row: TicketQueryRow, labels: Label[]): TicketListItem {
+function toListItem(row: TicketQueryRow, labels: Label[]): TicketWithoutSla {
   const { ticket, requester, organization } = row;
   return {
     id: ticket.id,

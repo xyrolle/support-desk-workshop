@@ -1,6 +1,7 @@
 import type { SortDirection, TicketListQuery, TicketPage, TicketSort } from "@support-desk/shared";
 import type { UseQueryResult } from "@tanstack/react-query";
 import type { ReactNode } from "react";
+import { useProjects } from "../../api/queries.ts";
 import { Pagination } from "../../components/Pagination.tsx";
 import { Panel } from "../../components/Panel.tsx";
 import { Button } from "../../components/ui/Button.tsx";
@@ -12,6 +13,7 @@ import { SortSelect } from "./SortSelect.tsx";
 import { TicketTable } from "./TicketTable.tsx";
 import { TicketTableSkeleton } from "./TicketTableSkeleton.tsx";
 import type { TicketColumn } from "./ticket-columns.tsx";
+import { SlaClockProvider, useNow } from "./use-now.ts";
 
 type TicketListPanelProps = {
   ticketsQuery: UseQueryResult<TicketPage>;
@@ -48,42 +50,57 @@ export function TicketListPanel({
   const showToolbar = !isEmpty || filters != null;
 
   return (
-    <Panel
-      toolbar={
-        showToolbar && (
-          <>
-            {filters}
-            <p className="px-1 text-ink-muted tabular-nums">
-              {ticketPage &&
-                `${ticketPage.totalItems} ${ticketPage.totalItems === 1 ? "ticket" : "tickets"}`}
-            </p>
-            <div className="ml-auto flex items-center gap-2">
-              <SearchTicketsButton />
-              <SortSelect sort={query.sort} direction={query.direction} onChange={changeSort} />
-            </div>
-          </>
-        )
-      }
-      footer={
-        ticketPage &&
-        ticketPage.items.length > 0 && (
-          <Pagination
-            page={ticketPage.page}
-            pageSize={ticketPage.pageSize}
-            totalItems={ticketPage.totalItems}
-            totalPages={ticketPage.totalPages}
-            onPageChange={goToPage}
-          />
-        )
-      }
-    >
-      <TicketListContent
-        ticketsQuery={ticketsQuery}
-        columns={columns}
-        empty={empty}
-        onPageChange={goToPage}
-      />
-    </Panel>
+    <LiveSlaClock>
+      <Panel
+        toolbar={
+          showToolbar && (
+            <>
+              {filters}
+              <p className="px-1 text-ink-muted tabular-nums">
+                {ticketPage &&
+                  `${ticketPage.totalItems} ${ticketPage.totalItems === 1 ? "ticket" : "tickets"}`}
+              </p>
+              <div className="ml-auto flex items-center gap-2">
+                <SearchTicketsButton />
+                <SortSelect sort={query.sort} direction={query.direction} onChange={changeSort} />
+              </div>
+            </>
+          )
+        }
+        footer={
+          ticketPage &&
+          ticketPage.items.length > 0 && (
+            <Pagination
+              page={ticketPage.page}
+              pageSize={ticketPage.pageSize}
+              totalItems={ticketPage.totalItems}
+              totalPages={ticketPage.totalPages}
+              onPageChange={goToPage}
+            />
+          )
+        }
+      >
+        <TicketListContent
+          ticketsQuery={ticketsQuery}
+          columns={columns}
+          empty={empty}
+          onPageChange={goToPage}
+        />
+      </Panel>
+    </LiveSlaClock>
+  );
+}
+
+/** One clock for every row, and the time zone of each project the list can show. */
+function LiveSlaClock({ children }: { children: ReactNode }) {
+  const now = useNow();
+  const { data: projects = [] } = useProjects();
+  const timeZones = new Map(projects.map((project) => [project.id, project.timeZone]));
+
+  return (
+    <SlaClockProvider now={now} timeZoneFor={(projectId) => timeZones.get(projectId)}>
+      {children}
+    </SlaClockProvider>
   );
 }
 

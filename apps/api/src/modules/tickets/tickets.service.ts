@@ -1,11 +1,15 @@
 import {
+  isAtRisk,
+  measureTicketSla,
   type ProjectTicketListQuery,
   type SortDirection,
   type TicketChanges,
   type TicketDetail,
+  type TicketListItem,
   type TicketListQuery,
   type TicketPage,
   type TicketSort,
+  type TicketStatus,
   unresolvedStatuses,
 } from "@support-desk/shared";
 import {
@@ -19,13 +23,14 @@ import type { TicketRow } from "../../db/schema.ts";
 import { NotFoundError, ValidationError } from "../../http/errors.ts";
 import { buildPage, pageRange } from "../../http/pagination.ts";
 import type { RequestContext } from "../../request-context.ts";
-import { recordTicketEvents } from "../activity/activity.repository.ts";
+import { findStatusChanges, recordTicketEvents } from "../activity/activity.repository.ts";
 import {
   findForeignLabelIds,
   findTicketLabelIds,
   replaceTicketLabels,
 } from "../labels/labels.repository.ts";
 import { findProjectMember } from "../members/members.repository.ts";
+import { findProjectTimeZones } from "../projects/projects.repository.ts";
 import { resolvedAtAfter } from "./resolution.ts";
 import { describeChanges } from "./ticket-changes.ts";
 import { toFtsQuery } from "./ticket-search.ts";
@@ -38,6 +43,7 @@ import {
   type TicketFilter,
   type TicketOrder,
   type TicketUpdate,
+  type TicketWithoutSla,
   updateTicketRow,
 } from "./tickets.repository.ts";
 
@@ -50,7 +56,12 @@ export function listProjectTickets(
   if (query.label) {
     requireFilterLabels(context.database, projectId, query.label);
   }
-  return pageOfTickets(context.database, projectFilter(context, projectId, query), query);
+  const filter = projectFilter(context, projectId, query);
+  const now = context.clock.now();
+  if (query.sla === "at_risk") {
+    return pageOfAtRiskTickets(context.database, filter, query, now);
+  }
+  return pageOfTickets(context.database, filter, query, now);
 }
 
 /** The project's tickets, narrowed by the list filters. `me` is the current user. */
@@ -89,7 +100,7 @@ export function listMyTickets(context: RequestContext, query: TicketListQuery): 
     assigneeId: context.user.id,
     statuses: unresolvedStatuses,
   };
-  return pageOfTickets(context.database, filter, query);
+  return pageOfTickets(context.database, filter, query, context.clock.now());
 }
 
 type PageQuery = {
@@ -103,15 +114,53 @@ export function pageOfTickets(
   database: AppDatabase,
   filter: TicketFilter,
   query: PageQuery,
+  now: Date,
 ): TicketPage {
-  const items = findTickets(
+  const items = withSla(
     database,
-    filter,
-    ticketOrder(query, filter.search),
-    pageRange(query.page),
+    findTickets(database, filter, ticketOrder(query, filter.search), pageRange(query.page)),
+    now,
   );
   const totalItems = countTickets(database, filter);
   return buildPage({ items, page: query.page, totalItems });
+}
+
+/**
+ * At risk cannot be filtered in SQL. Load the unresolved tickets that match
+ * the other filters, measure their clocks, then filter, sort and page.
+ */
+function pageOfAtRiskTickets(
+  database: AppDatabase,
+  filter: TicketFilter,
+  query: PageQuery,
+  now: Date,
+): TicketPage {
+  const statuses = unresolvedAmong(filter.statuses);
+  if (statuses.length === 0) {
+    return buildPage({ items: [], page: query.page, totalItems: 0 });
+  }
+
+  const atRisk = withSla(
+    database,
+    findTickets(database, { ...filter, statuses }, ticketOrder(query, filter.search)),
+    now,
+  ).filter((ticket) => isAtRisk(ticket));
+  const range = pageRange(query.page);
+  return buildPage({
+    items: atRisk.slice(range.offset, range.offset + range.limit),
+    page: query.page,
+    totalItems: atRisk.length,
+  });
+}
+
+/** The requested statuses that are still unresolved. None means the filter excludes them all. */
+function unresolvedAmong(statuses: readonly TicketStatus[] | undefined): TicketStatus[] {
+  if (!statuses) {
+    return [...unresolvedStatuses];
+  }
+  return statuses.filter((status) =>
+    (unresolvedStatuses as readonly TicketStatus[]).includes(status),
+  );
 }
 
 /** A search with no explicit sort is ranked by relevance. Otherwise the usual order. */
@@ -132,7 +181,11 @@ export function getTicket(
   if (!ticket) {
     throw ticketNotFound(ticketId);
   }
-  return ticket;
+  const [measured] = withSla(context.database, [ticket], context.clock.now());
+  if (!measured) {
+    throw ticketNotFound(ticketId);
+  }
+  return measured;
 }
 
 /**
@@ -229,6 +282,48 @@ export function releaseAssignedTickets(
         },
       ]);
     }
+  });
+}
+
+function withSla<Item extends TicketWithoutSla>(
+  database: AppDatabase,
+  items: Item[],
+  now: Date,
+): Array<Item & { sla: TicketListItem["sla"] }> {
+  if (items.length === 0) {
+    return [];
+  }
+
+  const timeZones = findProjectTimeZones(database, [
+    ...new Set(items.map((item) => item.projectId)),
+  ]);
+  const changes = findStatusChanges(
+    database,
+    items.map((item) => item.id),
+  );
+
+  return items.map((item) => {
+    const timeZone = timeZones.get(item.projectId);
+    if (!timeZone) {
+      throw new Error(`Project "${item.projectId}" has no time zone.`);
+    }
+    return {
+      ...item,
+      sla: measureTicketSla({
+        createdAt: new Date(item.createdAt),
+        firstRespondedAt: item.firstRespondedAt ? new Date(item.firstRespondedAt) : null,
+        resolvedAt: item.resolvedAt ? new Date(item.resolvedAt) : null,
+        status: item.status,
+        priority: item.priority,
+        tier: item.requester.organization.tier,
+        timeZone,
+        now,
+        statusChanges: (changes.get(item.id) ?? []).map((change) => ({
+          at: new Date(change.at),
+          to: change.to,
+        })),
+      }),
+    };
   });
 }
 

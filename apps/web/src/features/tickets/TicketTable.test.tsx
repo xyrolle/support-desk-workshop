@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { buildTicket } from "../../test/fixtures.ts";
 import { renderPage } from "../../test/render.tsx";
 import { TicketTable } from "./TicketTable.tsx";
+import { SlaClockProvider } from "./use-now.ts";
 
 function renderTable(tickets = [buildTicket()]) {
   return renderPage(
@@ -36,6 +37,47 @@ describe("TicketTable", () => {
       "href",
       "/projects/checkout/tickets/CHK-196",
     );
+  });
+
+  it("shows the clock that matters on an unresolved row", () => {
+    const measuredAt = "2026-09-29T13:00:00.000Z";
+    renderPage(
+      <SlaClockProvider now={new Date(measuredAt)} timeZoneFor={() => "Europe/Berlin"}>
+        <TicketTable
+          tickets={[
+            buildTicket({
+              status: "open",
+              firstRespondedAt: null,
+              sla: {
+                measuredAt,
+                firstResponse: { state: "running", targetMinutes: 180, elapsedMinutes: 46 },
+                resolution: { state: "running", targetMinutes: 540, elapsedMinutes: 0 },
+              },
+            }),
+            buildTicket({
+              id: "CHK-194",
+              status: "blocked",
+              sla: {
+                measuredAt,
+                firstResponse: { state: "met", targetMinutes: 60, elapsedMinutes: 0 },
+                resolution: { state: "paused", targetMinutes: 540, elapsedMinutes: 80 },
+              },
+            }),
+            buildTicket({
+              id: "CHK-100",
+              status: "resolved",
+              resolvedAt: measuredAt,
+            }),
+          ]}
+          columns={["id", "title", "customer", "status", "priority", "assignee", "updated"]}
+        />
+      </SlaClockProvider>,
+      { path: "/", url: "/" },
+    );
+
+    expect(screen.getByText("2h 14m left")).toBeInTheDocument();
+    expect(screen.getByText("Paused")).toBeInTheDocument();
+    expect(screen.getAllByText(/left|Paused|Breached/)).toHaveLength(2);
   });
 
   it("names the waiting status plainly and says Unassigned when nobody has the ticket", () => {

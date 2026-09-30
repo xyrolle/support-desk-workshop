@@ -5,6 +5,8 @@ import { Link } from "react-router";
 import { RelativeTime } from "../../components/RelativeTime.tsx";
 import { ContactAvatar } from "../customers/ContactAvatar.tsx";
 import { TierBadge } from "../customers/TierBadge.tsx";
+import { formatSlaTarget, SlaChip } from "../tickets/SlaChip.tsx";
+import { useNow } from "../tickets/use-now.ts";
 import { AssigneeField } from "./AssigneeField.tsx";
 import { editTicketsBlockedReason } from "./edit-permission.ts";
 import { LabelsField } from "./LabelsField.tsx";
@@ -22,6 +24,7 @@ type TicketSidePanelProps = {
 export function TicketSidePanel({ project, ticket }: TicketSidePanelProps) {
   const { update } = useTicketEditor(project.id, ticket.id);
   const blockedReason = editTicketsBlockedReason(project);
+  const now = useNow();
 
   return (
     <aside aria-label="Ticket details" className="sticky top-18 w-76 shrink-0 space-y-5">
@@ -65,6 +68,23 @@ export function TicketSidePanel({ project, ticket }: TicketSidePanelProps) {
         </PropertyRow>
       </PanelSection>
 
+      <PanelSection title="SLA">
+        <ClockRow
+          label="First response"
+          clock={ticket.sla.firstResponse}
+          measuredAt={ticket.sla.measuredAt}
+          timeZone={project.timeZone}
+          now={now}
+        />
+        <ClockRow
+          label="Resolution"
+          clock={ticket.sla.resolution}
+          measuredAt={ticket.sla.measuredAt}
+          timeZone={project.timeZone}
+          now={now}
+        />
+      </PanelSection>
+
       <PanelSection title="Requester">
         <div className="space-y-2 px-2">
           <p className="flex items-center gap-2">
@@ -106,6 +126,29 @@ export function TicketSidePanel({ project, ticket }: TicketSidePanelProps) {
         </PropertyRow>
       </PanelSection>
     </aside>
+  );
+}
+
+function ClockRow({
+  label,
+  clock,
+  measuredAt,
+  timeZone,
+  now,
+}: {
+  label: string;
+  clock: TicketDetail["sla"]["firstResponse"];
+  measuredAt: string;
+  timeZone: string;
+  now: Date;
+}) {
+  return (
+    <PropertyRow label={label}>
+      <span className="flex items-center gap-2 px-2">
+        <SlaChip clock={clock} measuredAt={measuredAt} timeZone={timeZone} now={now} />
+        <span className="text-ink-subtle tabular-nums">{formatSlaTarget(clock.targetMinutes)}</span>
+      </span>
+    </PropertyRow>
   );
 }
 

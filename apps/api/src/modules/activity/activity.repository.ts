@@ -1,11 +1,12 @@
 import {
   type Label,
   type TicketEvent,
+  type TicketStatus,
   ticketPrioritySchema,
   ticketStatusSchema,
   type User,
 } from "@support-desk/shared";
-import { asc, eq } from "drizzle-orm";
+import { and, asc, eq, inArray } from "drizzle-orm";
 import type { AppDatabase } from "../../db/client.ts";
 import { type NewTicketEventRow, type TicketEventRow, ticketEvents } from "../../db/schema.ts";
 import { findProjectLabels } from "../labels/labels.repository.ts";
@@ -34,6 +35,47 @@ export function toTicketEventRow(event: NewTicketEvent): NewTicketEventRow {
     default:
       return { ...fields, fromValue: event.from, toValue: event.to };
   }
+}
+
+export type StatusChangeRecord = {
+  at: string;
+  to: TicketStatus;
+};
+
+/**
+ * Status changes for these tickets, oldest first, in one query. A ticket with
+ * no changes is absent from the map; it has been open since it was created.
+ */
+export function findStatusChanges(
+  database: AppDatabase,
+  ticketIds: string[],
+): Map<string, StatusChangeRecord[]> {
+  const byTicket = new Map<string, StatusChangeRecord[]>();
+  if (ticketIds.length === 0) {
+    return byTicket;
+  }
+
+  const rows = database
+    .select({
+      ticketId: ticketEvents.ticketId,
+      toValue: ticketEvents.toValue,
+      createdAt: ticketEvents.createdAt,
+    })
+    .from(ticketEvents)
+    .where(and(eq(ticketEvents.type, "status_changed"), inArray(ticketEvents.ticketId, ticketIds)))
+    .orderBy(asc(ticketEvents.createdAt), asc(ticketEvents.id))
+    .all();
+
+  for (const row of rows) {
+    const change = { at: row.createdAt, to: ticketStatusSchema.parse(row.toValue) };
+    const changes = byTicket.get(row.ticketId);
+    if (changes) {
+      changes.push(change);
+    } else {
+      byTicket.set(row.ticketId, [change]);
+    }
+  }
+  return byTicket;
 }
 
 /** The ticket's activity, oldest first, with people and labels filled in. */

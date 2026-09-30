@@ -2,6 +2,7 @@ import { z } from "zod";
 import { contactSchema, organizationSummarySchema } from "./customers.ts";
 import { labelSchema } from "./labels.ts";
 import { pageSchema } from "./pagination.ts";
+import { ticketSlaSchema } from "./sla/sla-clock.ts";
 import { userSchema } from "./users.ts";
 
 /** `blocked` means the team is waiting on the customer. */
@@ -55,6 +56,8 @@ export const ticketListItemSchema = z.object({
   firstRespondedAt: z.iso.datetime().nullable(),
   /** When the ticket was last resolved; `null` while it is unresolved. */
   resolvedAt: z.iso.datetime().nullable(),
+  /** First response and resolution, measured at `sla.measuredAt`. */
+  sla: ticketSlaSchema,
   /** The best matching passage. Present only when the list was a search. */
   snippet: z.array(snippetPartSchema).optional(),
 });
@@ -126,10 +129,16 @@ export const ticketSearchSchema = z.string().trim().max(100).optional();
  * A project's ticket list: the shared paging and sort, plus the four filters and
  * search. `sort` stays optional so a search with no sort can rank by relevance.
  */
+/** `at_risk` keeps the tickets that are about to breach, or already have. */
+export const slaFilterSchema = z.enum(["at_risk"]);
+
+export type SlaFilter = z.infer<typeof slaFilterSchema>;
+
 export const projectTicketListQuerySchema = ticketListQuerySchema.extend({
   ...ticketFiltersSchema.shape,
   q: ticketSearchSchema,
   sort: ticketSortSchema.optional(),
+  sla: slaFilterSchema.optional(),
 });
 
 export type ProjectTicketListQuery = z.infer<typeof projectTicketListQuerySchema>;

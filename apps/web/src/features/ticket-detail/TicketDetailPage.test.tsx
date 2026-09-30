@@ -53,6 +53,28 @@ describe("TicketDetailPage", () => {
     );
   });
 
+  it("shows both SLA clocks, with their targets, in the side panel", async () => {
+    vi.spyOn(api, "getProject").mockResolvedValue(buildProject());
+    vi.spyOn(api, "getTicket").mockResolvedValue(
+      buildTicketDetail({
+        sla: {
+          measuredAt: "2026-09-29T13:00:00.000Z",
+          firstResponse: { state: "met", targetMinutes: 60, elapsedMinutes: 0 },
+          resolution: { state: "breached", targetMinutes: 540, elapsedMinutes: 900 },
+        },
+      }),
+    );
+
+    renderTicketPage();
+
+    expect(await screen.findByText("First response")).toBeInTheDocument();
+    expect(screen.getByText("Resolution")).toBeInTheDocument();
+    expect(screen.getByText("Met")).toBeInTheDocument();
+    expect(screen.getByText("Breached 6h 00m ago")).toBeInTheDocument();
+    expect(screen.getByText("1h")).toBeInTheDocument();
+    expect(screen.getByText("9h")).toBeInTheDocument();
+  });
+
   it("changes the status from the side panel", async () => {
     vi.spyOn(api, "getProject").mockResolvedValue(buildProject());
     const updateTicket = vi

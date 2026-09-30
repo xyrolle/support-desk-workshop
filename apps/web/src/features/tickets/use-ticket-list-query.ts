@@ -47,7 +47,7 @@ export function useTicketListQuery() {
   const query = parseTicketListQuery(searchParams);
 
   function changeQuery(changes: Partial<ProjectTicketListQuery>) {
-    const filtersChanged = filterFields.some((field) => field in changes);
+    const filtersChanged = filterFields.some((field) => field in changes) || "sla" in changes;
     setSearchParams(
       searchParamsFor({
         ...query,
@@ -76,6 +76,7 @@ function parseTicketListQuery(searchParams: URLSearchParams) {
   return {
     ...(paging.success ? paging.data : defaultTicketListQuery),
     ...filters,
+    sla: searchParams.get("sla") === "at_risk" ? ("at_risk" as const) : undefined,
   };
 }
 
@@ -101,5 +102,6 @@ function searchParamsFor(query: ProjectTicketListQuery): URLSearchParams {
     priority: query.priority,
     assignee: query.assignee,
     label: query.label,
+    sla: query.sla,
   });
 }

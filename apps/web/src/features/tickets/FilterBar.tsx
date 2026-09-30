@@ -17,15 +17,16 @@ import { filtersAreActive } from "./use-ticket-list-query.ts";
 type FilterBarProps = {
   projectId: string;
   filters: TicketFilters;
-  onChange: (changes: Partial<TicketFilters>) => void;
+  sla?: "at_risk";
+  onChange: (changes: Partial<TicketFilters & { sla?: "at_risk" }>) => void;
   onClear: () => void;
 };
 
 /** Status, priority, assignee and label, in the ticket table's toolbar. */
-export function FilterBar({ projectId, filters, onChange, onClear }: FilterBarProps) {
+export function FilterBar({ projectId, filters, sla, onChange, onClear }: FilterBarProps) {
   const { data: members = [] } = useMembers(projectId);
   const { data: labels = [] } = useLabels(projectId);
-  const active = filtersAreActive(filters);
+  const active = filtersAreActive(filters) || sla === "at_risk";
 
   return (
     <>
@@ -56,6 +57,14 @@ export function FilterBar({ projectId, filters, onChange, onClear }: FilterBarPr
         options={labels.map((label) => ({ value: label.id, label: label.name }))}
         onChange={(label: number[]) => onChange({ label: orUndefined(label) })}
       />
+      <Button
+        variant={sla === "at_risk" ? "secondary" : "ghost"}
+        size="sm"
+        aria-pressed={sla === "at_risk"}
+        onClick={() => onChange({ sla: sla === "at_risk" ? undefined : "at_risk" })}
+      >
+        At risk
+      </Button>
       {active && (
         <Button variant="ghost" size="sm" onClick={onClear}>
           Clear filters

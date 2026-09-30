@@ -110,6 +110,23 @@ describe("TicketListPage filters", () => {
     expect(screen.getByRole("combobox", { name: "Status" })).toHaveTextContent("Status");
   });
 
+  it("keeps At risk in the URL and sends it with the other filters", async () => {
+    const user = userEvent.setup();
+    renderTicketList("/projects/checkout?sla=at_risk&page=2");
+
+    const atRisk = await screen.findByRole("button", { name: "At risk" });
+    expect(atRisk).toHaveAttribute("aria-pressed", "true");
+    expect(api.listTickets).toHaveBeenCalledWith(
+      "checkout",
+      expect.objectContaining({ sla: "at_risk", page: 2 }),
+    );
+
+    await user.click(atRisk);
+
+    expect(vi.mocked(api.listTickets).mock.lastCall?.[1]).toMatchObject({ page: 1 });
+    expect(vi.mocked(api.listTickets).mock.lastCall?.[1]?.sla).toBeUndefined();
+  });
+
   it("says when nothing matches and still offers clear filters", async () => {
     vi.mocked(api.listTickets).mockResolvedValue({
       page: 1,

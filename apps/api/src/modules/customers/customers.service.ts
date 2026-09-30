@@ -43,7 +43,7 @@ export function listOrganizationTickets(
 ): TicketPage {
   requireOrganization(context.database, organizationId);
   const filter = { projectIds: visibleProjectIds(context), organizationId };
-  return pageOfTickets(context.database, filter, query);
+  return pageOfTickets(context.database, filter, query, context.clock.now());
 }
 
 function requireOrganization(database: AppDatabase, organizationId: string): Organization {

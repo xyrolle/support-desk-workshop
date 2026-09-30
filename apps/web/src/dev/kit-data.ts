@@ -86,6 +86,14 @@ function kitTicket(
     updatedAt: hoursAgo(hours),
     firstRespondedAt: hoursAgo(hours + 47),
     resolvedAt: null,
+    sla: {
+      measuredAt: hoursAgo(0),
+      firstResponse: { state: "met", targetMinutes: 60, elapsedMinutes: 0 },
+      resolution:
+        fields.status === "blocked"
+          ? { state: "paused", targetMinutes: 540, elapsedMinutes: 200 }
+          : { state: "running", targetMinutes: 540, elapsedMinutes: 400 },
+    },
   };
 }
 

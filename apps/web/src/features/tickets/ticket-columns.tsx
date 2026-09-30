@@ -1,11 +1,13 @@
-import type { TicketListItem } from "@support-desk/shared";
+import { listedSlaClock, type TicketListItem } from "@support-desk/shared";
 import type { ReactNode } from "react";
 import { Link } from "react-router";
 import { RelativeTime } from "../../components/RelativeTime.tsx";
 import { ProjectName } from "../projects/ProjectName.tsx";
 import { AssigneeLabel } from "./AssigneeLabel.tsx";
 import { PriorityLabel } from "./PriorityLabel.tsx";
+import { SlaChip } from "./SlaChip.tsx";
 import { StatusLabel } from "./StatusLabel.tsx";
+import { useSlaClock } from "./use-now.ts";
 
 export type TicketColumn =
   | "id"
@@ -80,13 +82,29 @@ export const ticketColumns: Record<TicketColumn, ColumnDefinition> = {
 
 /** The title links to the ticket and covers the whole row, so any click opens it. */
 function TicketTitle({ ticket }: { ticket: TicketListItem }) {
+  const slaClock = useSlaClock();
+  const clock = listedSlaClock(ticket);
+  const timeZone = slaClock?.timeZoneFor(ticket.projectId);
+
   return (
-    <Link
-      to={ticketPath(ticket)}
-      className="block truncate font-medium outline-none before:absolute before:inset-0"
-      title={ticket.title}
-    >
-      {ticket.title}
-    </Link>
+    <span className="flex w-full min-w-0 items-center gap-2">
+      <Link
+        to={ticketPath(ticket)}
+        className="min-w-0 flex-1 truncate font-medium outline-none before:absolute before:inset-0"
+        title={ticket.title}
+      >
+        {ticket.title}
+      </Link>
+      {clock && slaClock && timeZone ? (
+        <span className="min-w-0 max-w-[50%] shrink-0 overflow-hidden">
+          <SlaChip
+            clock={clock}
+            measuredAt={ticket.sla.measuredAt}
+            timeZone={timeZone}
+            now={slaClock.now}
+          />
+        </span>
+      ) : null}
+    </span>
   );
 }
