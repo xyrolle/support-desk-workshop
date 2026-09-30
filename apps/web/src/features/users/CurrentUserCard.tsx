@@ -1,5 +1,5 @@
 import { useCurrentUser } from "../../api/queries.ts";
-import { Avatar } from "../../components/Avatar.tsx";
+import { Avatar } from "../../components/ui/Avatar.tsx";
 
 export function CurrentUserCard() {
   const { data: currentUser } = useCurrentUser();
@@ -9,7 +9,7 @@ export function CurrentUserCard() {
   }
 
   return (
-    <div className="flex items-center gap-2.5 px-2 py-1">
+    <div className="flex items-center gap-2.5 px-2 py-1.5">
       <Avatar user={currentUser} size="md" />
       <div className="min-w-0">
         <p className="truncate font-medium">{currentUser.name}</p>

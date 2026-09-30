@@ -1,26 +1,11 @@
 import type { Project } from "@support-desk/shared";
-import { classNames } from "../../lib/class-names.ts";
 
-type ProjectIconSize = "sm" | "lg";
-
-const sizeClasses: Record<ProjectIconSize, string> = {
-  sm: "size-5 rounded text-[11px]",
-  lg: "size-8 rounded-lg text-sm",
-};
-
-type ProjectIconProps = {
-  project: Project;
-  size?: ProjectIconSize;
-};
-
-export function ProjectIcon({ project, size = "sm" }: ProjectIconProps) {
+/** The project's first letter on a small tile. Decorative: show the name next to it. */
+export function ProjectIcon({ project }: { project: Project }) {
   return (
     <span
       aria-hidden="true"
-      className={classNames(
-        "flex shrink-0 items-center justify-center bg-accent-soft font-semibold text-accent",
-        sizeClasses[size],
-      )}
+      className="flex size-4 shrink-0 items-center justify-center rounded-[4px] border border-line bg-canvas text-[9px] font-semibold text-ink-muted"
     >
       {project.name.charAt(0)}
     </span>

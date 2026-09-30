@@ -31,7 +31,7 @@ Checkout and an agent in Mobile App and Internal Tools. Billing is hidden from h
 ## Architecture
 
 ```
-apps/web         React 19 · Vite · Tailwind CSS · TanStack Query · React Router
+apps/web         React 19 · Vite · Tailwind CSS · Base UI · TanStack Query · React Router
    │  fetch /api  (Vite proxies to the API in dev)
    ▼
 apps/api         Hono: routes → services → repositories
@@ -50,6 +50,8 @@ packages/shared  zod schemas and types, imported by both apps
   return the same 404; viewers get a 403 on any change. Every ticket change writes its
   activity event in the same transaction. Errors always look like
   `{ "error": { "code": "...", "message": "..." } }`.
+- **Web**: the design-system primitives live in `apps/web/src/components/ui`; run
+  `npm run dev` and open `/dev/ui` to see them all.
 - **Demo data**: generated from hand-written tickets, relative to the moment you seed, so
   "2 hours ago" is true on the day. Tests use a fixed clock.
 

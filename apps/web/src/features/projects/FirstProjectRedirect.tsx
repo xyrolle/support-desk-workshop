@@ -1,9 +1,9 @@
 import { FolderOpen } from "lucide-react";
 import { Navigate } from "react-router";
 import { useProjects } from "../../api/queries.ts";
-import { Button } from "../../components/Button.tsx";
-import { EmptyState } from "../../components/EmptyState.tsx";
-import { ErrorState } from "../../components/ErrorState.tsx";
+import { Button } from "../../components/ui/Button.tsx";
+import { EmptyState } from "../../components/ui/EmptyState.tsx";
+import { ErrorState } from "../../components/ui/ErrorState.tsx";
 
 /** The home page: sends the user to their first project. */
 export function FirstProjectRedirect() {

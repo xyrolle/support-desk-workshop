@@ -1,7 +1,7 @@
 import { Compass } from "lucide-react";
 import { Link } from "react-router";
-import { buttonClassName } from "./Button.tsx";
-import { EmptyState } from "./EmptyState.tsx";
+import { buttonClassName } from "./ui/Button.tsx";
+import { EmptyState } from "./ui/EmptyState.tsx";
 
 export function NotFoundPage() {
   return (
@@ -10,7 +10,7 @@ export function NotFoundPage() {
       title="Page not found"
       description="The link may be broken, or the page may have moved."
       action={
-        <Link to="/" className={buttonClassName}>
+        <Link to="/" className={buttonClassName()}>
           Back to your projects
         </Link>
       }

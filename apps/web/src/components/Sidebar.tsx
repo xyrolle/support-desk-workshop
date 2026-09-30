@@ -1,22 +1,21 @@
-import { Inbox } from "lucide-react";
 import { ProjectSwitcher } from "../features/projects/ProjectSwitcher.tsx";
 import { CurrentUserCard } from "../features/users/CurrentUserCard.tsx";
+import { AppLogo } from "./AppLogo.tsx";
 
+/** The app's left column. Each module adds a SidebarSection to the scrolling middle. */
 export function Sidebar() {
   return (
     <aside className="flex w-60 shrink-0 flex-col border-r border-line bg-sidebar">
-      <div className="flex h-16 items-center gap-2.5 px-5">
-        <span className="flex size-7 items-center justify-center rounded-lg bg-indigo-500 text-white shadow-xs">
-          <Inbox aria-hidden="true" className="size-4" />
-        </span>
-        <span className="text-[15px] font-semibold tracking-tight">Support Desk</span>
+      <div className="flex h-12 shrink-0 items-center gap-2 px-4">
+        <AppLogo />
+        <span className="font-semibold tracking-tight">Support Desk</span>
       </div>
 
-      <nav aria-label="Projects" className="flex-1 overflow-y-auto px-3 py-3">
+      <div className="flex-1 space-y-4 overflow-y-auto px-2 py-2">
         <ProjectSwitcher />
-      </nav>
+      </div>
 
-      <div className="border-t border-line p-3">
+      <div className="p-2">
         <CurrentUserCard />
       </div>
     </aside>

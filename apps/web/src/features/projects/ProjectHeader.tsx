@@ -1,28 +1,45 @@
 import type { Project } from "@support-desk/shared";
-import { Skeleton } from "../../components/Skeleton.tsx";
+import { Breadcrumbs } from "../../components/Breadcrumbs.tsx";
+import { PageHeader } from "../../components/PageHeader.tsx";
+import { TopBar } from "../../components/TopBar.tsx";
+import { Skeleton } from "../../components/ui/Skeleton.tsx";
 import { ProjectIcon } from "./ProjectIcon.tsx";
 
 export function ProjectHeader({ project }: { project: Project }) {
   return (
-    <header className="flex h-16 shrink-0 items-center gap-3 border-b border-line px-8">
+    <header className="shrink-0">
       <title>{`${project.name} · Support Desk`}</title>
-      <ProjectIcon project={project} size="lg" />
-      <div className="min-w-0">
-        <h1 className="truncate text-[15px] font-semibold tracking-tight">{project.name}</h1>
-        <p className="truncate text-[13px] text-ink-muted">{project.description}</p>
-      </div>
+      <TopBar>
+        <Breadcrumbs
+          items={[
+            {
+              label: project.name,
+              to: `/projects/${project.id}`,
+              icon: <ProjectIcon project={project} />,
+            },
+            { label: "Tickets" },
+          ]}
+        />
+      </TopBar>
+      <PageHeader title={project.name} description={project.description} />
     </header>
   );
 }
 
 export function ProjectHeaderSkeleton() {
   return (
-    <header className="flex h-16 shrink-0 items-center gap-3 border-b border-line px-8">
-      <Skeleton className="size-8 rounded-lg" />
-      <div className="space-y-1.5">
-        <Skeleton className="h-3.5 w-28" />
-        <Skeleton className="h-3 w-56" />
+    <div className="shrink-0">
+      <TopBar>
+        <Skeleton className="h-3 w-36" />
+      </TopBar>
+      <div className="px-8 pt-7 pb-5">
+        <div className="flex h-7 items-center">
+          <Skeleton className="h-4 w-32" />
+        </div>
+        <div className="mt-1 flex h-5 items-center">
+          <Skeleton className="h-3 w-80" />
+        </div>
       </div>
-    </header>
+    </div>
   );
 }
