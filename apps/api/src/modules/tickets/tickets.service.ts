@@ -1,9 +1,11 @@
 import {
   type ProjectTicketListQuery,
+  type SortDirection,
   type TicketChanges,
   type TicketDetail,
   type TicketListQuery,
   type TicketPage,
+  type TicketSort,
   unresolvedStatuses,
 } from "@support-desk/shared";
 import {
@@ -26,6 +28,7 @@ import {
 import { findProjectMember } from "../members/members.repository.ts";
 import { resolvedAtAfter } from "./resolution.ts";
 import { describeChanges } from "./ticket-changes.ts";
+import { toFtsQuery } from "./ticket-search.ts";
 import {
   countTickets,
   findAssignedTicketRows,
@@ -33,6 +36,7 @@ import {
   findTicketRow,
   findTickets,
   type TicketFilter,
+  type TicketOrder,
   type TicketUpdate,
   updateTicketRow,
 } from "./tickets.repository.ts";
@@ -66,7 +70,16 @@ function projectFilter(
     assigneeIds: assigneeIds && assigneeIds.length > 0 ? assigneeIds : undefined,
     includeUnassigned: query.assignee?.includes("unassigned"),
     labelIds: query.label,
+    search: searchOf(query.q),
   };
+}
+
+/** `undefined` is no search. A query with no searchable word matches nothing. */
+function searchOf(q: string | undefined): string | null | undefined {
+  if (!q) {
+    return undefined;
+  }
+  return toFtsQuery(q) ?? null;
 }
 
 /** "My tickets": assigned to the current user and not resolved yet, in any of their projects. */
@@ -79,15 +92,34 @@ export function listMyTickets(context: RequestContext, query: TicketListQuery): 
   return pageOfTickets(context.database, filter, query);
 }
 
+type PageQuery = {
+  page: number;
+  sort?: TicketSort;
+  direction: SortDirection;
+};
+
 /** One page of the tickets that match the filter, sorted as the query asks. */
 export function pageOfTickets(
   database: AppDatabase,
   filter: TicketFilter,
-  query: TicketListQuery,
+  query: PageQuery,
 ): TicketPage {
-  const items = findTickets(database, filter, query, pageRange(query.page));
+  const items = findTickets(
+    database,
+    filter,
+    ticketOrder(query, filter.search),
+    pageRange(query.page),
+  );
   const totalItems = countTickets(database, filter);
   return buildPage({ items, page: query.page, totalItems });
+}
+
+/** A search with no explicit sort is ranked by relevance. Otherwise the usual order. */
+function ticketOrder(query: PageQuery, search: string | null | undefined): TicketOrder {
+  if (typeof search === "string" && query.sort === undefined) {
+    return { sort: "relevance", direction: "asc" };
+  }
+  return { sort: query.sort ?? "updated", direction: query.direction };
 }
 
 export function getTicket(

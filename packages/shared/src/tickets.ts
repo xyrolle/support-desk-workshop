@@ -31,6 +31,14 @@ export const requesterSchema = contactSchema.extend({
 
 export type Requester = z.infer<typeof requesterSchema>;
 
+/** One piece of a search passage. Highlighted pieces are the words that matched. */
+export const snippetPartSchema = z.object({
+  text: z.string(),
+  highlighted: z.boolean(),
+});
+
+export type SnippetPart = z.infer<typeof snippetPartSchema>;
+
 /** A ticket as shown in lists: everything except the description. */
 export const ticketListItemSchema = z.object({
   id: z.string(),
@@ -47,6 +55,8 @@ export const ticketListItemSchema = z.object({
   firstRespondedAt: z.iso.datetime().nullable(),
   /** When the ticket was last resolved; `null` while it is unresolved. */
   resolvedAt: z.iso.datetime().nullable(),
+  /** The best matching passage. Present only when the list was a search. */
+  snippet: z.array(snippetPartSchema).optional(),
 });
 
 export type TicketListItem = z.infer<typeof ticketListItemSchema>;
@@ -106,8 +116,21 @@ export const ticketListQuerySchema = z.object({
 
 export type TicketListQuery = z.infer<typeof ticketListQuerySchema>;
 
-/** A project's ticket list: the shared paging and sort, plus the four filters. */
-export const projectTicketListQuerySchema = ticketListQuerySchema.extend(ticketFiltersSchema.shape);
+/**
+ * Full-text query. Trimmed; a blank value means no search. Longer than 100
+ * characters is rejected.
+ */
+export const ticketSearchSchema = z.string().trim().max(100).optional();
+
+/**
+ * A project's ticket list: the shared paging and sort, plus the four filters and
+ * search. `sort` stays optional so a search with no sort can rank by relevance.
+ */
+export const projectTicketListQuerySchema = ticketListQuerySchema.extend({
+  ...ticketFiltersSchema.shape,
+  q: ticketSearchSchema,
+  sort: ticketSortSchema.optional(),
+});
 
 export type ProjectTicketListQuery = z.infer<typeof projectTicketListQuerySchema>;
 

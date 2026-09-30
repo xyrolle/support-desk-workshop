@@ -1,8 +1,8 @@
 import {
   type Label,
+  type SortDirection,
   type TicketDetail,
   type TicketListItem,
-  type TicketListQuery,
   type TicketPriority,
   type TicketSort,
   type TicketStatus,
@@ -24,6 +24,7 @@ import {
 } from "../../db/schema.ts";
 import type { PageRange } from "../../http/pagination.ts";
 import { findLabelsOfTickets } from "../labels/labels.repository.ts";
+import { snippetMarkers, snippetParts } from "./ticket-search.ts";
 
 export type TicketFilter = {
   /** Required, so a list can only ever show tickets from projects the user can see. */
@@ -37,15 +38,24 @@ export type TicketFilter = {
   statuses?: readonly TicketStatus[];
   priorities?: readonly TicketPriority[];
   labelIds?: number[];
+  /**
+   * FTS5 `MATCH` text. `null` matches no ticket; omitted means the list is not
+   * a search.
+   */
+  search?: string | null;
 };
 
-export type TicketOrder = Pick<TicketListQuery, "sort" | "direction">;
+export type TicketOrder = {
+  sort: TicketSort | "relevance";
+  direction: SortDirection;
+};
 
 type TicketQueryRow = {
   ticket: TicketRow;
   assignee: User | null;
   requester: ContactRow;
   organization: OrganizationRow;
+  snippet: string | null;
 };
 
 export function findTickets(
@@ -54,9 +64,12 @@ export function findTickets(
   order: TicketOrder,
   range: PageRange,
 ): TicketListItem[] {
-  const rows = selectTickets(database)
+  const rows = selectTickets(
+    database,
+    typeof filter.search === "string" ? filter.search : undefined,
+  )
     .where(matchesFilter(database, filter))
-    .orderBy(...orderBy(order))
+    .orderBy(...orderBy(order, filter.search))
     .limit(range.limit)
     .offset(range.offset)
     .all();
@@ -136,9 +149,23 @@ export function updateTicketRow(database: AppDatabase, ticketId: string, update:
   database.update(tickets).set(update).where(eq(tickets.id, ticketId)).run();
 }
 
-function selectTickets(database: AppDatabase) {
+function selectTickets(database: AppDatabase, search?: string) {
+  const snippet = search
+    ? sql<string | null>`(
+        select snippet(ticket_search, -1, ${snippetMarkers.start}, ${snippetMarkers.end}, '…', 16)
+        from ticket_search
+        where ticket_search.ticket_id = ${tickets.id}
+          and ticket_search match ${search}
+      )`.as("snippet")
+    : sql<string | null>`null`.as("snippet");
   return database
-    .select({ ticket: tickets, assignee: users, requester: contacts, organization: organizations })
+    .select({
+      ticket: tickets,
+      assignee: users,
+      requester: contacts,
+      organization: organizations,
+      snippet,
+    })
     .from(tickets)
     .leftJoin(users, eq(users.id, tickets.assigneeId))
     .innerJoin(contacts, eq(contacts.id, tickets.requesterId))
@@ -154,7 +181,23 @@ function matchesFilter(database: AppDatabase, filter: TicketFilter): SQL | undef
     filter.statuses ? inArray(tickets.status, [...filter.statuses]) : undefined,
     filter.priorities ? inArray(tickets.priority, [...filter.priorities]) : undefined,
     labelClause(database, filter.labelIds),
+    searchClause(filter.search),
   );
+}
+
+/** A search stays inside the same filter as the count, so the two never disagree. */
+function searchClause(search: string | null | undefined): SQL | undefined {
+  if (search === undefined) {
+    return undefined;
+  }
+  if (search === null) {
+    return sql`0`;
+  }
+  return sql`exists (
+    select 1 from ticket_search
+    where ticket_search.ticket_id = ${tickets.id}
+      and ticket_search match ${search}
+  )`;
 }
 
 /** Assignees in `assigneeIds` and unassigned tickets are alternatives. */
@@ -195,9 +238,23 @@ const sortColumns: Record<TicketSort, SQLiteColumn | SQL> = {
 };
 
 /** Ties go to the most recently updated ticket, then the id, so pages never overlap. */
-function orderBy({ sort, direction }: TicketOrder): SQL[] {
+function orderBy({ sort, direction }: TicketOrder, search: string | null | undefined): SQL[] {
+  if (sort === "relevance" && search) {
+    return [asc(relevanceRank(search)), desc(tickets.updatedAt), asc(tickets.id)];
+  }
+  const column = sort === "relevance" ? tickets.updatedAt : sortColumns[sort];
   const inDirection = direction === "asc" ? asc : desc;
-  return [inDirection(sortColumns[sort]), desc(tickets.updatedAt), asc(tickets.id)];
+  return [inDirection(column), desc(tickets.updatedAt), asc(tickets.id)];
+}
+
+/** Lower is a better match. Title weighs 10, the description 4, comments 1. */
+function relevanceRank(search: string): SQL {
+  return sql`(
+    select bm25(ticket_search, 10, 4, 1)
+    from ticket_search
+    where ticket_search.ticket_id = ${tickets.id}
+      and ticket_search match ${search}
+  )`;
 }
 
 function toListItem(row: TicketQueryRow, labels: Label[]): TicketListItem {
@@ -220,5 +277,6 @@ function toListItem(row: TicketQueryRow, labels: Label[]): TicketListItem {
     updatedAt: ticket.updatedAt,
     firstRespondedAt: ticket.firstRespondedAt,
     resolvedAt: ticket.resolvedAt,
+    ...(row.snippet ? { snippet: snippetParts(row.snippet) } : {}),
   };
 }

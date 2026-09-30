@@ -60,7 +60,7 @@ export function useTicketListQuery() {
   return { query, changeQuery };
 }
 
-function parseTicketListQuery(searchParams: URLSearchParams): ProjectTicketListQuery {
+function parseTicketListQuery(searchParams: URLSearchParams) {
   const paging = ticketListQuerySchema.safeParse({
     page: searchParams.get("page") ?? undefined,
     sort: searchParams.get("sort") ?? undefined,

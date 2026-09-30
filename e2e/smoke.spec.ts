@@ -67,4 +67,19 @@ test("browse my tickets, a project and a ticket", async ({ page }) => {
     await expect(page).toHaveURL("/projects/checkout?status=blocked");
     await expect(page.getByText("12 tickets")).toBeVisible();
   });
+
+  await test.step("search opens a matching ticket", async () => {
+    await page.goto("/projects/checkout");
+    await page.getByRole("button", { name: /Search/ }).click();
+    await page.getByRole("textbox", { name: "Search tickets" }).fill("apple pay");
+
+    const match = page.getByRole("option", { name: /CHK-197/ });
+    await expect(match).toBeVisible();
+    await match.click();
+
+    await expect(page).toHaveURL("/projects/checkout/tickets/CHK-197");
+    await expect(
+      page.getByRole("heading", { level: 1, name: "Apple Pay domain verification keeps failing" }),
+    ).toBeVisible();
+  });
 });

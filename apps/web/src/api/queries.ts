@@ -49,10 +49,11 @@ export function useProjects() {
   return useQuery({ queryKey: queryKeys.projects, queryFn: api.listProjects });
 }
 
-export function useProject(projectId: string) {
+export function useProject(projectId: string, enabled = true) {
   return useQuery({
     queryKey: queryKeys.project(projectId),
     queryFn: () => api.getProject(projectId),
+    enabled,
   });
 }
 

@@ -6,6 +6,8 @@ import { Panel } from "../../components/Panel.tsx";
 import { Button } from "../../components/ui/Button.tsx";
 import { EmptyState } from "../../components/ui/EmptyState.tsx";
 import { ErrorState } from "../../components/ui/ErrorState.tsx";
+import { Kbd } from "../../components/ui/Kbd.tsx";
+import { useSearchPalette } from "../search/use-command-palette.ts";
 import { SortSelect } from "./SortSelect.tsx";
 import { TicketTable } from "./TicketTable.tsx";
 import { TicketTableSkeleton } from "./TicketTableSkeleton.tsx";
@@ -55,7 +57,8 @@ export function TicketListPanel({
               {ticketPage &&
                 `${ticketPage.totalItems} ${ticketPage.totalItems === 1 ? "ticket" : "tickets"}`}
             </p>
-            <div className="ml-auto">
+            <div className="ml-auto flex items-center gap-2">
+              <SearchTicketsButton />
               <SortSelect sort={query.sort} direction={query.direction} onChange={changeSort} />
             </div>
           </>
@@ -87,6 +90,16 @@ export function TicketListPanel({
 type TicketListContentProps = Pick<TicketListPanelProps, "ticketsQuery" | "columns" | "empty"> & {
   onPageChange: (page: number) => void;
 };
+
+function SearchTicketsButton() {
+  const { openSearch } = useSearchPalette();
+  return (
+    <Button variant="secondary" size="sm" onClick={openSearch}>
+      Search
+      <Kbd>⌘K</Kbd>
+    </Button>
+  );
+}
 
 function TicketListContent({ ticketsQuery, columns, empty, onPageChange }: TicketListContentProps) {
   if (ticketsQuery.isPending) {
