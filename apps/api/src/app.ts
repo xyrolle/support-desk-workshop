@@ -10,6 +10,7 @@ import { organizationRoutes } from "./modules/customers/customers.routes.ts";
 import { labelRoutes } from "./modules/labels/labels.routes.ts";
 import { memberRoutes } from "./modules/members/members.routes.ts";
 import { projectRoutes } from "./modules/projects/projects.routes.ts";
+import { reportRoutes } from "./modules/reports/reports.routes.ts";
 import { myTicketRoutes, ticketRoutes } from "./modules/tickets/tickets.routes.ts";
 import { userRoutes } from "./modules/users/users.routes.ts";
 
@@ -34,6 +35,7 @@ export function createApp(options: AppOptions) {
   app.route("/api/projects", ticketRoutes);
   app.route("/api/projects", commentRoutes);
   app.route("/api/projects", activityRoutes);
+  app.route("/api/projects", reportRoutes);
 
   app.notFound(handleNotFound);
   app.onError(handleError);
