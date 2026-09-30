@@ -15,6 +15,7 @@ export type TicketColumn =
   | "project"
   | "customer"
   | "status"
+  | "sla"
   | "priority"
   | "assignee"
   | "updated";
@@ -35,12 +36,14 @@ export function ticketPath(ticket: Pick<TicketListItem, "id" | "projectId">): st
 export const ticketColumns: Record<TicketColumn, ColumnDefinition> = {
   id: {
     header: "ID",
-    className: "w-24",
+    className: "w-20",
     cellClassName: "whitespace-nowrap text-ink-subtle tabular-nums",
     render: (ticket) => ticket.id,
   },
   title: {
     header: "Title",
+    // About 200px, the room left in a 1504px window once the other columns take theirs.
+    className: "w-[12.5rem]",
     render: (ticket) => <TicketTitle ticket={ticket} />,
   },
   project: {
@@ -51,14 +54,20 @@ export const ticketColumns: Record<TicketColumn, ColumnDefinition> = {
   },
   customer: {
     header: "Customer",
-    className: "w-44",
+    className: "w-[10.25rem]",
     cellClassName: "truncate text-ink-muted",
     render: (ticket) => ticket.requester.organization.name,
   },
   status: {
     header: "Status",
-    className: "w-48",
+    className: "w-44",
     render: (ticket) => <StatusLabel status={ticket.status} />,
+  },
+  sla: {
+    header: "SLA",
+    className: "w-[10.75rem]",
+    cellClassName: "whitespace-nowrap",
+    render: (ticket) => <TicketSla ticket={ticket} />,
   },
   priority: {
     header: "Priority",
@@ -68,12 +77,12 @@ export const ticketColumns: Record<TicketColumn, ColumnDefinition> = {
   },
   assignee: {
     header: "Assignee",
-    className: "w-40",
+    className: "w-[8.5rem]",
     render: (ticket) => <AssigneeLabel assignee={ticket.assignee} />,
   },
   updated: {
     header: "Updated",
-    className: "w-32 text-right",
+    className: "w-[7.375rem] text-right",
     // Above the row's link, so the exact time still shows on hover.
     cellClassName: "relative whitespace-nowrap text-ink-muted tabular-nums",
     render: (ticket) => <RelativeTime value={ticket.updatedAt} />,
@@ -82,29 +91,31 @@ export const ticketColumns: Record<TicketColumn, ColumnDefinition> = {
 
 /** The title links to the ticket and covers the whole row, so any click opens it. */
 function TicketTitle({ ticket }: { ticket: TicketListItem }) {
+  return (
+    <Link
+      to={ticketPath(ticket)}
+      className="block truncate font-medium outline-none before:absolute before:inset-0"
+      title={ticket.title}
+    >
+      {ticket.title}
+    </Link>
+  );
+}
+
+/** The clock that matters for this row. Resolved tickets leave the cell empty. */
+function TicketSla({ ticket }: { ticket: TicketListItem }) {
   const slaClock = useSlaClock();
   const clock = listedSlaClock(ticket);
   const timeZone = slaClock?.timeZoneFor(ticket.projectId);
-
+  if (!clock || !slaClock || !timeZone) {
+    return null;
+  }
   return (
-    <span className="flex w-full min-w-0 items-center gap-2">
-      <Link
-        to={ticketPath(ticket)}
-        className="min-w-0 flex-1 truncate font-medium outline-none before:absolute before:inset-0"
-        title={ticket.title}
-      >
-        {ticket.title}
-      </Link>
-      {clock && slaClock && timeZone ? (
-        <span className="min-w-0 max-w-[50%] shrink-0 overflow-hidden">
-          <SlaChip
-            clock={clock}
-            measuredAt={ticket.sla.measuredAt}
-            timeZone={timeZone}
-            now={slaClock.now}
-          />
-        </span>
-      ) : null}
-    </span>
+    <SlaChip
+      clock={clock}
+      measuredAt={ticket.sla.measuredAt}
+      timeZone={timeZone}
+      now={slaClock.now}
+    />
   );
 }

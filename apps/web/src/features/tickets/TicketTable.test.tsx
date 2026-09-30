@@ -5,6 +5,15 @@ import { renderPage } from "../../test/render.tsx";
 import { TicketTable } from "./TicketTable.tsx";
 import { SlaClockProvider } from "./use-now.ts";
 
+const selection = {
+  isSelected: () => false,
+  allSelected: false,
+  someSelected: false,
+  blockedReason: null,
+  onToggle: () => {},
+  onTogglePage: () => {},
+};
+
 function renderTable(tickets = [buildTicket()]) {
   return renderPage(
     <TicketTable
@@ -28,6 +37,16 @@ describe("TicketTable", () => {
     expect(within(row).getByText("In progress")).toBeInTheDocument();
     expect(within(row).getByText("Urgent")).toBeInTheDocument();
     expect(within(row).getByText("Diego Alvarez")).toBeInTheDocument();
+  });
+
+  it("gives the title room and scrolls the list only below the design width", () => {
+    renderTable();
+
+    const title = screen.getByRole("columnheader", { name: "Title" });
+    const table = title.closest("table");
+    expect(title.className).toMatch(/w-\[12\.5rem\]/);
+    expect(table?.className).toMatch(/min-w-\[1198px\]/);
+    expect(table?.parentElement?.className).toMatch(/max-\[1503px\]:overflow-x-auto/);
   });
 
   it("links each title to its ticket", () => {
@@ -69,7 +88,7 @@ describe("TicketTable", () => {
               resolvedAt: measuredAt,
             }),
           ]}
-          columns={["id", "title", "customer", "status", "priority", "assignee", "updated"]}
+          columns={["id", "title", "customer", "status", "sla", "priority", "assignee", "updated"]}
         />
       </SlaClockProvider>,
       { path: "/", url: "/" },
@@ -78,6 +97,34 @@ describe("TicketTable", () => {
     expect(screen.getByText("2h 14m left")).toBeInTheDocument();
     expect(screen.getByText("Paused")).toBeInTheDocument();
     expect(screen.getAllByText(/left|Paused|Breached/)).toHaveLength(2);
+  });
+
+  it("shift-click selects a range without selecting the text between the rows", () => {
+    renderPage(
+      <TicketTable
+        tickets={[
+          buildTicket({ id: "CHK-205" }),
+          buildTicket({ id: "CHK-204" }),
+          buildTicket({ id: "CHK-203" }),
+        ]}
+        columns={["id", "title", "status"]}
+        selection={selection}
+      />,
+      { path: "/", url: "/" },
+    );
+
+    const checkbox = screen.getByRole("checkbox", { name: "Select CHK-203" });
+    const shifted = new MouseEvent("mousedown", {
+      bubbles: true,
+      cancelable: true,
+      shiftKey: true,
+    });
+    checkbox.dispatchEvent(shifted);
+    expect(shifted.defaultPrevented).toBe(true);
+
+    const plain = new MouseEvent("mousedown", { bubbles: true, cancelable: true });
+    checkbox.dispatchEvent(plain);
+    expect(plain.defaultPrevented).toBe(false);
   });
 
   it("names the waiting status plainly and says Unassigned when nobody has the ticket", () => {

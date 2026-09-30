@@ -1,5 +1,5 @@
 import type { TicketPage } from "@support-desk/shared";
-import { screen } from "@testing-library/react";
+import { screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { api } from "../../api/client.ts";
@@ -45,6 +45,29 @@ beforeEach(() => {
 });
 
 describe("TicketListPage filters", () => {
+  it("shows the SLA clock in its own column after Status", async () => {
+    renderTicketList();
+
+    const row = await screen.findByRole("row", { name: /CHK-196/ });
+    const headers = screen.getAllByRole("columnheader");
+    const names = headers.map((header) => header.textContent);
+    const statusIndex = names.indexOf("Status");
+    const titleIndex = names.indexOf("Title");
+    const slaIndex = names.indexOf("SLA");
+    expect(names[statusIndex + 1]).toBe("SLA");
+    const cells = within(row).getAllByRole("cell");
+    const titleCell = cells[titleIndex];
+    const slaCell = cells[slaIndex];
+    if (!titleCell || !slaCell) {
+      throw new Error("The row is missing a title or SLA cell.");
+    }
+    expect(titleCell).toHaveTextContent("Customers charged twice");
+    expect(titleCell).not.toHaveTextContent(/Breached|left|Paused/);
+    expect(slaCell.textContent).toMatch(/Breached .+ ago|left|Paused/);
+    expect(slaCell.className).not.toMatch(/overflow-hidden|truncate|max-w-/);
+    expect(slaCell.className).toMatch(/whitespace-nowrap/);
+  });
+
   it("shows the filters from the URL and asks for every repeated value", async () => {
     renderTicketList("/projects/checkout?status=open&status=blocked&status=done&assignee=me");
 

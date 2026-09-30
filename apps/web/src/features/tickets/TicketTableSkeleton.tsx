@@ -20,6 +20,7 @@ const placeholderWidths: Record<TicketColumn, string> = {
   project: "w-20",
   customer: "w-28",
   status: "w-24",
+  sla: "w-16",
   priority: "w-16",
   assignee: "w-24",
   updated: "ml-auto w-16",
@@ -35,8 +36,8 @@ export function TicketTableSkeleton({
   selectable?: boolean;
 }) {
   return (
-    <div role="status" aria-label="Loading tickets">
-      <Table>
+    <div role="status" aria-label="Loading tickets" className="max-[1503px]:overflow-x-auto">
+      <Table className="min-w-[1198px]">
         <TableHeader>
           {selectable && <TableHead className="w-10 pr-0" />}
           {columns.map((column) => (

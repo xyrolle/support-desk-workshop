@@ -15,7 +15,7 @@ import { useTicketListQuery } from "../tickets/use-ticket-list-query.ts";
 import { ContactAvatar } from "./ContactAvatar.tsx";
 import { TierBadge } from "./TierBadge.tsx";
 
-const columns: TicketColumn[] = ["id", "title", "project", "status", "updated"];
+const columns: TicketColumn[] = ["id", "title", "project", "status", "sla", "updated"];
 
 /** A customer: their plan, their people, and their tickets in the projects you can see. */
 export function OrganizationPage() {

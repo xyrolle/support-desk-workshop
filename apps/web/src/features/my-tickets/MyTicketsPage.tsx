@@ -12,6 +12,7 @@ const columns: TicketColumn[] = [
   "project",
   "customer",
   "status",
+  "sla",
   "priority",
   "updated",
 ];

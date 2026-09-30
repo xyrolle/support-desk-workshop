@@ -25,6 +25,7 @@ const columns: TicketColumn[] = [
   "title",
   "customer",
   "status",
+  "sla",
   "priority",
   "assignee",
   "updated",

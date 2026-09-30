@@ -29,6 +29,26 @@ test("browse my tickets, a project and a ticket", async ({ page }) => {
 
     await expect(page).toHaveURL("/projects/checkout?page=2");
     await expect(pagination).toContainText("Showing 26–50 of 105");
+    expect(
+      (await page.getByRole("table").getByRole("link").first().boundingBox())?.width ?? 0,
+    ).toBeGreaterThan(160);
+  });
+
+  await test.step("at 1504 every column fits and the title stays readable", async () => {
+    await page.setViewportSize({ width: 1504, height: 840 });
+
+    const title = page.getByRole("columnheader", { name: "Title" });
+    const updated = page.getByRole("columnheader", { name: "Updated" });
+    await expect(title).toBeVisible();
+    await expect(updated).toBeVisible();
+    expect((await title.boundingBox())?.width ?? 0).toBeGreaterThanOrEqual(200);
+    const updatedBox = await updated.boundingBox();
+    expect((updatedBox?.x ?? 0) + (updatedBox?.width ?? 0)).toBeLessThanOrEqual(1504);
+    const scrolls = await page.getByRole("table").evaluate((element) => {
+      const frame = element.parentElement;
+      return frame !== null && frame.scrollWidth > frame.clientWidth + 1;
+    });
+    expect(scrolls).toBe(false);
   });
 
   await test.step("a ticket opens with its conversation and properties", async () => {

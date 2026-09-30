@@ -5,8 +5,12 @@ import { classNames } from "../../lib/class-names.ts";
  * The parts of a data table: 40px rows on hairlines, under a 36px header that sticks
  * below the page's TopBar while the page scrolls. Put it inside a Panel.
  */
-export function Table({ children }: { children: ReactNode }) {
-  return <table className="w-full table-fixed border-separate border-spacing-0">{children}</table>;
+export function Table({ children, className }: { children: ReactNode; className?: string }) {
+  return (
+    <table className={classNames("w-full table-fixed border-separate border-spacing-0", className)}>
+      {children}
+    </table>
+  );
 }
 
 /** The header row. Its children are TableHead cells. */
