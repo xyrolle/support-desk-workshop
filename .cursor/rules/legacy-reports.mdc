@@ -1,0 +1,19 @@
+---
+description: The legacy volume report in apps/api/src/modules/reports. Read before changing it or before writing any new report.
+globs: apps/api/src/modules/reports/**
+alwaysApply: false
+---
+
+# Legacy: modules/reports
+
+This module predates the Drizzle migration. It works, it is tested, and the ops team's spreadsheet depends on its snake_case JSON, so leave its shape alone.
+
+Do not copy its patterns into new code, including new reports:
+
+- Raw SQL strings on `database.$client`: new code uses the Drizzle query builder in a repository.
+- Rows cast with `as`: new code returns shared types, validated with zod at the edges.
+- `legacy-dates.ts` counts whole UTC days and ignores the project's time zone: new code uses `lib/dates.ts` and the project's `timeZone`.
+- The route parses its own query string: new routes use `validate()` with a shared schema.
+- `formatTicketRef()` is deprecated: use `ticketRef()` from `@support-desk/shared`.
+
+Fixing a bug here is fine: keep the style of the file, add a test in `reports.test.ts`.

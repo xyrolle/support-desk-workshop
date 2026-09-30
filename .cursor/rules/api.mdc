@@ -6,10 +6,12 @@ alwaysApply: false
 
 # API conventions
 
-- Follow the layers in `modules/<name>/`: `*.routes.ts` → `*.service.ts` → `*.repository.ts`. Copy the shape of `modules/tickets/`.
-- Routes: `validate("query" | "param" | "json", schema)` from `http/validation.ts` with a schema from `@support-desk/shared`, call one service function, return `c.json(result)`.
-- Services: call `requireProjectAccess(database, user, projectId)` from `auth/access.ts` before touching project data. Never check membership anywhere else.
-- Repositories: Drizzle query builder only, return shared types (`Ticket`, `Project`, `User`). Keep list and count in sync through `matchesFilter()`.
-- Errors: throw `NotFoundError` or `ValidationError` from `http/errors.ts`. Hidden and missing resources use the same 404 message.
-- Schema changes: edit `db/schema.ts`, run `npm run db:generate -w @support-desk/api -- --name <change>`, update `db/seed.ts`, commit the migration.
+- Layers per module in `modules/<name>/`: `*.routes.ts` → `*.service.ts` → `*.repository.ts`. Copy the shape of `modules/tickets/` or `modules/comments/`, never `modules/reports/` (legacy).
+- Routes: `validate("query" | "param" | "json", schema)` with a schema from `@support-desk/shared`, call one service function with `c.var.context`, return `c.json(result)` (201 for creates, `c.body(null, 204)` for deletes).
+- Services take the `RequestContext` first and call `authorize(context, projectId, action?)` from `auth/policy.ts` before touching project data. Cross-project lists are scoped with `visibleProjectIds(context)`. No membership or role checks anywhere else.
+- Every change to a ticket's status, priority, assignee or labels writes an activity event with `recordTicketEvents()` inside the same `inTransaction()` as the change. `describeChanges()` in `modules/tickets/ticket-changes.ts` turns a change into events.
+- Time comes from `context.clock.now()`, never `new Date()`. Timestamps are UTC ISO strings; days, weeks and business hours are computed in the project's `timeZone` with `lib/dates.ts`.
+- Repositories use the Drizzle query builder and return shared types. List and count share one `matchesFilter()`.
+- Errors: throw `ValidationError` (400), `ForbiddenError` (403), `NotFoundError` (404) or `ConflictError` (409) from `http/errors.ts`. Hidden and missing resources use the same 404 message.
+- Schema changes: edit `db/schema.ts`, run `npm run db:generate -w @support-desk/api -- --name <change>`, update the seed and `db/seed.test.ts`, commit the migration.
 - Relative imports end in `.ts`. No enums, no constructor parameter properties (Node strips types at runtime).

@@ -6,9 +6,10 @@ alwaysApply: false
 # Testing
 
 - Tests sit next to the code as `*.test.ts(x)`. Write the failing test first.
-- API: build a fresh app in each test with `createTestApp()` from `apps/api/src/test/test-app.ts` and call it with `getJson(app, path)` or `app.request(path, init)`. Parse bodies with the shared zod schemas.
-- The seed is deterministic (`TEST_REFERENCE_DATE`), so assert exact ids: Checkout has 30 tickets, `CHK-130` is first on page 1, and 4 are blocked.
-- Every new project-scoped route gets two access tests: `internal-tools` (hidden) and an unknown id both return the same 404 body.
+- API: `createTestApp(userId?)` from `apps/api/src/test/test-app.ts` gives a fresh app on an in-memory, seeded database; call it with `getJson(app, path)` or `sendJson(app, method, path, body)`. Parse bodies with the shared zod schemas. `createTestContext()` is for service-level tests.
+- The seed is deterministic and the clock is fixed at `TEST_NOW` (2026-09-29T13:00Z), so assert exact ids and counts: Checkout has 105 tickets, Maya (`DEMO_USER_ID`) is admin of Checkout, and Ravi (`VIEWER_USER_ID`) is a viewer.
+- Every new project-scoped route gets the access tests: a hidden project (`billing` for Maya) and an unknown one give the same 404 body; a viewer gets 403 on any change.
+- A mutation test also checks the activity event it writes (actor, from, to, `TEST_NOW`).
 - Web: React Testing Library, query by role, label or text. No snapshots.
 - e2e: one smoke test in `e2e/smoke.spec.ts`; add a step only for flows that cross API and UI.
 - Run one file with `npx vitest run <path>`, everything with `npm test`, and `npm run check` before handing off.
