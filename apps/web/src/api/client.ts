@@ -1,4 +1,6 @@
 import {
+  type BulkTicketUpdate,
+  bulkTicketUpdateResultSchema,
   commentSchema,
   type ErrorCode,
   errorResponseSchema,
@@ -173,6 +175,13 @@ export const api = {
     return request(ticketPath(projectId, ticketId), ticketDetailSchema, {
       method: "PATCH",
       body: changes,
+    });
+  },
+
+  bulkUpdateTickets(projectId: string, update: BulkTicketUpdate) {
+    return request(`${projectPath(projectId)}/tickets`, bulkTicketUpdateResultSchema, {
+      method: "PATCH",
+      body: update,
     });
   },
 

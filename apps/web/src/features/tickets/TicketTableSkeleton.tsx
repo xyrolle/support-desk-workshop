@@ -26,11 +26,19 @@ const placeholderWidths: Record<TicketColumn, string> = {
 };
 
 /** The table's real header over placeholder rows, so nothing moves when the tickets arrive. */
-export function TicketTableSkeleton({ columns }: { columns: TicketColumn[] }) {
+export function TicketTableSkeleton({
+  columns,
+  selectable = false,
+}: {
+  columns: TicketColumn[];
+  /** A checkbox column, matching a list that can select rows. */
+  selectable?: boolean;
+}) {
   return (
     <div role="status" aria-label="Loading tickets">
       <Table>
         <TableHeader>
+          {selectable && <TableHead className="w-10 pr-0" />}
           {columns.map((column) => (
             <TableHead key={column} className={ticketColumns[column].className}>
               {ticketColumns[column].header}
@@ -40,6 +48,11 @@ export function TicketTableSkeleton({ columns }: { columns: TicketColumn[] }) {
         <tbody>
           {placeholderRows.map(({ id, titleWidth }) => (
             <TableRow key={id}>
+              {selectable && (
+                <TableCell className="w-10 pr-0">
+                  <Skeleton className="size-3.5" />
+                </TableCell>
+              )}
               {columns.map((column) => (
                 <TableCell key={column} className={ticketColumns[column].className}>
                   <Skeleton

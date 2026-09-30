@@ -1,4 +1,5 @@
 import {
+  bulkTicketUpdateSchema,
   projectTicketListQuerySchema,
   ticketChangesSchema,
   ticketListQuerySchema,
@@ -6,7 +7,13 @@ import {
 import { Hono } from "hono";
 import type { AppEnv } from "../../http/app-env.ts";
 import { validate } from "../../http/validation.ts";
-import { getTicket, listMyTickets, listProjectTickets, updateTicket } from "./tickets.service.ts";
+import {
+  getTicket,
+  listMyTickets,
+  listProjectTickets,
+  updateTicket,
+  updateTickets,
+} from "./tickets.service.ts";
 
 export const ticketRoutes = new Hono<AppEnv>()
   .get("/:projectId/tickets", validate("query", projectTicketListQuerySchema), (c) => {
@@ -20,6 +27,9 @@ export const ticketRoutes = new Hono<AppEnv>()
   .patch("/:projectId/tickets/:ticketId", validate("json", ticketChangesSchema), (c) => {
     const { projectId, ticketId } = c.req.param();
     return c.json(updateTicket(c.var.context, projectId, ticketId, c.req.valid("json")));
+  })
+  .patch("/:projectId/tickets", validate("json", bulkTicketUpdateSchema), (c) => {
+    return c.json(updateTickets(c.var.context, c.req.param("projectId"), c.req.valid("json")));
   });
 
 export const myTicketRoutes = new Hono<AppEnv>().get(

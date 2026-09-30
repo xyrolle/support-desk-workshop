@@ -151,3 +151,46 @@ export const ticketChangesSchema = z
   });
 
 export type TicketChanges = z.infer<typeof ticketChangesSchema>;
+
+const MAX_BULK_UPDATES = 100;
+
+/**
+ * Body of PATCH /api/projects/:projectId/tickets. Each ticket at most once.
+ * `changes` is the same object as the single-ticket PATCH.
+ */
+export const bulkTicketUpdateSchema = z
+  .strictObject({
+    updates: z
+      .array(
+        z.strictObject({
+          ticketId: z.string().min(1),
+          changes: ticketChangesSchema,
+        }),
+      )
+      .min(1)
+      .max(MAX_BULK_UPDATES),
+  })
+  .refine(
+    (body) => new Set(body.updates.map((update) => update.ticketId)).size === body.updates.length,
+    { error: "Each ticket can appear only once.", path: ["updates"] },
+  );
+
+export type BulkTicketUpdate = z.infer<typeof bulkTicketUpdateSchema>;
+
+/** A ticket's editable fields before a bulk change, so the client can undo it. */
+export const ticketStateSchema = z.object({
+  ticketId: z.string(),
+  status: ticketStatusSchema,
+  priority: ticketPrioritySchema,
+  assigneeId: z.string().nullable(),
+  labelIds: z.array(z.number().int()),
+});
+
+export type TicketState = z.infer<typeof ticketStateSchema>;
+
+export const bulkTicketUpdateResultSchema = z.object({
+  tickets: z.array(ticketListItemSchema),
+  previous: z.array(ticketStateSchema),
+});
+
+export type BulkTicketUpdateResult = z.infer<typeof bulkTicketUpdateResultSchema>;
