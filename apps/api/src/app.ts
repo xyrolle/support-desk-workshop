@@ -6,6 +6,7 @@ import { handleError, handleNotFound } from "./http/errors.ts";
 import type { Clock } from "./lib/dates.ts";
 import { activityRoutes } from "./modules/activity/activity.routes.ts";
 import { commentRoutes } from "./modules/comments/comments.routes.ts";
+import { organizationRoutes } from "./modules/customers/customers.routes.ts";
 import { labelRoutes } from "./modules/labels/labels.routes.ts";
 import { memberRoutes } from "./modules/members/members.routes.ts";
 import { projectRoutes } from "./modules/projects/projects.routes.ts";
@@ -26,6 +27,7 @@ export function createApp(options: AppOptions) {
   app.use("/api/*", currentUser(options));
   app.route("/api", userRoutes);
   app.route("/api/me/tickets", myTicketRoutes);
+  app.route("/api/organizations", organizationRoutes);
   app.route("/api/projects", projectRoutes);
   app.route("/api/projects", memberRoutes);
   app.route("/api/projects", labelRoutes);

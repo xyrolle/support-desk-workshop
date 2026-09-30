@@ -27,6 +27,7 @@ export type TicketFilter = {
   /** Required, so a list can only ever show tickets from projects the user can see. */
   projectIds: string[];
   assigneeId?: string;
+  organizationId?: string;
   statuses?: readonly TicketStatus[];
 };
 
@@ -140,6 +141,7 @@ function matchesFilter(filter: TicketFilter): SQL | undefined {
   return and(
     inArray(tickets.projectId, filter.projectIds),
     filter.assigneeId ? eq(tickets.assigneeId, filter.assigneeId) : undefined,
+    filter.organizationId ? eq(contacts.organizationId, filter.organizationId) : undefined,
     filter.statuses ? inArray(tickets.status, [...filter.statuses]) : undefined,
   );
 }
