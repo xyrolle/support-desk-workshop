@@ -12,7 +12,7 @@ import {
 
 const iconClassName = "size-4 shrink-0 text-ink-subtle";
 
-/** Actions with shortcuts, a toggle that keeps the menu open, and a destructive item. */
+/** Actions with icons, a toggle that keeps the menu open, and a destructive item. */
 export function ActionsMenuDemo() {
   const [isSubscribed, setIsSubscribed] = useState(true);
 
@@ -23,12 +23,10 @@ export function ActionsMenuDemo() {
         <ChevronDown aria-hidden="true" className="-mr-1 size-3.5 text-ink-subtle" />
       </MenuTrigger>
       <MenuPopup>
-        <MenuItem icon={<UserRound aria-hidden="true" className={iconClassName} />} shortcut="A">
+        <MenuItem icon={<UserRound aria-hidden="true" className={iconClassName} />}>
           Assign to…
         </MenuItem>
-        <MenuItem icon={<Link2 aria-hidden="true" className={iconClassName} />} shortcut="⌘ L">
-          Copy link
-        </MenuItem>
+        <MenuItem icon={<Link2 aria-hidden="true" className={iconClassName} />}>Copy link</MenuItem>
         <MenuSeparator />
         <MenuCheckboxItem
           icon={<Bell aria-hidden="true" className={iconClassName} />}

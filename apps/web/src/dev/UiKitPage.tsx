@@ -72,7 +72,7 @@ export function UiKitPage() {
           <Button disabled>Disabled</Button>
         </KitSection>
 
-        <KitSection title="Fields and keys" description="Kbd marks real shortcuts.">
+        <KitSection title="Fields and keys" description="Only for keys that work.">
           <Input aria-label="Ticket title" placeholder="Ticket title" className="w-56" />
           <SearchInput
             aria-label="Search tickets"
@@ -83,9 +83,8 @@ export function UiKitPage() {
             onClear={() => setSearchText("")}
           />
           <span className="flex items-center gap-1.5 text-ink-muted">
-            <Kbd>⌘</Kbd>
-            <Kbd>K</Kbd>
-            <span className="ml-1">Search</span>
+            <Kbd>↵</Kbd>
+            <span className="ml-1">Choose</span>
           </span>
           <span className="flex items-center gap-1.5 text-ink-muted">
             <Kbd>Esc</Kbd>
