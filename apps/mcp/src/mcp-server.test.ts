@@ -113,6 +113,28 @@ describe("support desk MCP server", () => {
     });
   });
 
+  it("lists every tool as read-only", async () => {
+    installFetch(() => json({}));
+    const readOnly = {
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: false,
+    };
+
+    await withClient(async (client) => {
+      const listed = await client.listTools();
+
+      expect(
+        listed.tools.map((tool) => ({ name: tool.name, annotations: tool.annotations })),
+      ).toEqual([
+        { name: "search_tickets", annotations: readOnly },
+        { name: "get_ticket", annotations: readOnly },
+        { name: "list_sla_risks", annotations: readOnly },
+      ]);
+    });
+  });
+
   it("returns the first page of a search as compact JSON", async () => {
     const snippet = [
       { text: "Apple", highlighted: true },

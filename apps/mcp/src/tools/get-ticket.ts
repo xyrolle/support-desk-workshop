@@ -1,6 +1,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { Comment } from "@support-desk/shared";
 import { z } from "zod";
+import { readOnlyToolAnnotations } from "../read-only.ts";
 import type { SupportDeskClient } from "../support-desk-client.ts";
 import { toolResult } from "../tool-result.ts";
 
@@ -19,6 +20,7 @@ export function registerGetTicket(server: McpServer, client: SupportDeskClient) 
     {
       description: "Read a ticket, its conversation and its activity.",
       inputSchema: getTicketInput,
+      annotations: readOnlyToolAnnotations,
     },
     (input: GetTicketInput) => toolResult(() => readTicket(client, input)),
   );

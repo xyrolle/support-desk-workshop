@@ -1,6 +1,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { listedSlaClock, type SlaClock, type TicketListItem } from "@support-desk/shared";
 import { z } from "zod";
+import { readOnlyToolAnnotations } from "../read-only.ts";
 import type { SupportDeskClient } from "../support-desk-client.ts";
 import { toolResult } from "../tool-result.ts";
 
@@ -16,6 +17,7 @@ export function registerListSlaRisks(server: McpServer, client: SupportDeskClien
     {
       description: "List unresolved tickets that are breached or due within two business hours.",
       inputSchema: listSlaRisksInput,
+      annotations: readOnlyToolAnnotations,
     },
     (input: ListSlaRisksInput) => toolResult(() => listSlaRisks(client, input.projectId)),
   );
