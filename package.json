@@ -18,7 +18,8 @@
     "typecheck": "tsc --noEmit && npm run typecheck --workspaces",
     "format": "biome check --write",
     "check": "biome check && npm run typecheck && npm test",
-    "setup:check": "node scripts/setup-check.ts"
+    "setup:check": "node scripts/setup-check.ts",
+    "report:weekly": "node apps/api/src/weekly-report/print-weekly-report.ts"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.14",

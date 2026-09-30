@@ -21,13 +21,17 @@ hidden from her. `DEMO_USER_ID=ravi-patel npm run dev` shows the app as a viewer
 
 ## Commands
 
-| Command            | Use it to                                                   |
-| ------------------ | ----------------------------------------------------------- |
-| `npm run check`    | Run Biome, typecheck and unit tests (must pass)             |
-| `npm test`         | Run all unit tests; `npx vitest run <path>` runs one        |
-| `npm run test:e2e` | Run the Playwright smoke test (own ports, in-memory DB)     |
-| `npm run format`   | Format and auto-fix with Biome                              |
-| `npm run db:seed`  | Rebuild the local database with fresh demo data            |
+| Command                 | Use it to                                                        |
+| ----------------------- | ---------------------------------------------------------------- |
+| `npm run check`         | Run Biome, typecheck and unit tests (must pass)                  |
+| `npm test`              | Run all unit tests; `npx vitest run <path>` runs one             |
+| `npm run test:e2e`      | Run the Playwright smoke test (own ports, in-memory DB)          |
+| `npm run format`        | Format and auto-fix with Biome                                   |
+| `npm run db:seed`       | Rebuild the local database with fresh demo data                 |
+| `npm run report:weekly` | Print last week's report (`--as-of YYYY-MM-DD`, `--out file.md`) |
+
+`npm run --silent report:weekly` keeps npm's own banner out of the Markdown when you
+pipe the report.
 
 After editing `apps/api/src/db/schema.ts`, create a migration with
 `npm run db:generate -w @support-desk/api -- --name <change>`, then run `npm run db:seed`.

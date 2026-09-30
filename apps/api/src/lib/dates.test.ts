@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { addMinutes, utcDate, zonedParts } from "./dates.ts";
+import { addMinutes, projectWeek, reportInstant, utcDate, zonedParts } from "./dates.ts";
 
 describe("zonedParts", () => {
   it("gives the wall-clock time in the time zone", () => {
@@ -33,6 +33,32 @@ describe("zonedParts", () => {
 
     expect(zonedParts(beforeTheChange, "Europe/Berlin").hour).toBe(12);
     expect(zonedParts(afterTheChange, "Europe/Berlin").hour).toBe(11);
+  });
+});
+
+describe("projectWeek", () => {
+  it("is the seven local days ending on the given date", () => {
+    expect(projectWeek("2026-09-29", "Europe/Berlin")).toEqual({
+      start: new Date("2026-09-22T22:00:00.000Z"),
+      end: new Date("2026-09-29T22:00:00.000Z"),
+    });
+    expect(projectWeek("2026-09-29", "America/New_York")).toEqual({
+      start: new Date("2026-09-23T04:00:00.000Z"),
+      end: new Date("2026-09-30T04:00:00.000Z"),
+    });
+    expect(projectWeek("2026-09-29", "Europe/Lisbon")).toEqual({
+      start: new Date("2026-09-22T23:00:00.000Z"),
+      end: new Date("2026-09-29T23:00:00.000Z"),
+    });
+  });
+
+  it("measures at now while the week is open, and at the end once it has closed", () => {
+    const week = projectWeek("2026-09-29", "Europe/Berlin");
+    const during = new Date("2026-09-29T13:00:00.000Z");
+    const after = new Date("2026-09-30T00:00:00.000Z");
+
+    expect(reportInstant(week, during)).toBe(during);
+    expect(reportInstant(week, after)).toEqual(week.end);
   });
 });
 
