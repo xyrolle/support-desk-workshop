@@ -6,13 +6,14 @@ alwaysApply: false
 
 # Web conventions
 
-- Server data: add a method to `api` in `api/client.ts` (it parses the response with a shared zod schema) and a hook in `api/queries.ts`. Components never call `fetch`.
-- List state (page, filters, search) lives in the URL via `features/tickets/use-ticket-list-query.ts`, parsed with the shared `ticketListQuerySchema`.
-- Every data view sits in a `Panel` and handles loading (`Skeleton`), error (`ErrorState` with "Try again") and empty (`EmptyState`) states.
-- Ticket descriptions and customer messages are untrusted: render them with `react-markdown` (its defaults never render raw HTML) or as React text, never with `dangerouslySetInnerHTML`.
-- Controls the user's role does not allow stay visible but disabled, with a tooltip that says why. Use `project.permissions` from the API; never re-derive them from the role.
-- Style with Tailwind and the tokens from `styles/index.css`: `bg-canvas`, `bg-surface-hover`, `text-ink`, `text-ink-muted`, `text-ink-subtle`, `border-line`, `text-accent`. UI text is 13px (`text-sm`). Greys are ink at a strength, never a new hex. Colour carries meaning only: status chips and glyphs, urgent priority, errors, avatars.
-- Build screens from `components/ui/` (Button, Input, Select, Combobox, Menu, Popover, Dialog, Toast, Tabs, Tooltip, Table, Checkbox, SelectionBar, StatusBadge, StatusIcon, PriorityIcon, Avatar, AvatarStack, Badge, Kbd) and the shell in `components/` (TopBar, Breadcrumbs, PageHeader, Panel, SidebarSection). See them all at `/dev/ui`. Popups come from Base UI through these wrappers; never hand-roll a popup, focus trap or outside-click handler.
-- Words for values (`statusNames`, `priorityNames`, `roleNames`) come from `@support-desk/shared`. Icons come from `lucide-react`.
+- Server data: add a method to `api` in `api/client.ts` (it parses the response with a shared zod schema), then a hook in `api/queries.ts` (reads) or `api/mutations.ts` (writes, which refresh what they change). Components never call `fetch`.
+- List state (page, sort, and later filters) lives in the URL via `features/tickets/use-ticket-list-query.ts`. Ticket lists use `TicketListPanel` with the columns they need from `ticket-columns.tsx`.
+- Pages scroll as a whole: `TopBar` and the table header stay put. Every data view sits in a `Panel` and handles loading (`Skeleton`), error (`ErrorState` with "Try again") and empty (`EmptyState`). A page whose main request fails renders `QueryErrorState`, which picks the 404, 403 or retry screen.
+- Controls the user's role does not allow stay visible but disabled, wrapped in `PermissionHint`, and the page says why in text. Use `project.permissions` from the API; never re-derive them from the role.
+- Ticket descriptions and comments render with `components/Markdown.tsx` (react-markdown, no raw HTML). Never use `dangerouslySetInnerHTML`.
+- Style with Tailwind and the tokens from `styles/index.css`: `bg-canvas`, `bg-surface-hover`, `text-ink`, `text-ink-muted`, `text-ink-subtle`, `border-line`, `text-accent`. UI text is 13px (`text-sm`), reading text 14px (`text-base`). Greys are ink at a strength, never a new hex. Colour carries meaning only: status chips and glyphs, urgent priority, internal notes, errors, avatars.
+- Build screens from `components/ui/` (Button, Input, Textarea, Select, Combobox, Menu, Popover, Dialog, Toast, Tabs, Tooltip, Table, Checkbox, SelectionBar, StatusBadge, StatusIcon, PriorityIcon, Avatar, AvatarStack, Badge, Kbd) and the shell in `components/` (TopBar, Breadcrumbs, PageHeader, Panel, SidebarLink, SidebarSection). See them all at `/dev/ui`. Popups come from Base UI through these wrappers; never hand-roll a popup, focus trap or outside-click handler.
+- Words for values (`statusNames`, `priorityNames`, `roleNames`, `tierNames`) come from `@support-desk/shared`. Icons come from `lucide-react`.
 - One component per file (`PascalCase.tsx`); a `components/ui/` file exports the parts of one primitive (`Select`, `SelectTrigger`, `SelectItem`). Hooks and helpers are `kebab-case.ts`. Imports use explicit `.ts`/`.tsx` extensions.
-- Check the result in both light and dark mode at 1440×900.
+- Tests render pages with `renderPage()` from `test/render.tsx`, stub `api` methods with `vi.spyOn`, and build data with `test/fixtures.ts`.
+- Check the result in light and dark mode at 1504×840.

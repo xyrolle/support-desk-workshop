@@ -10,6 +10,6 @@ alwaysApply: false
 - The seed is deterministic and the clock is fixed at `TEST_NOW` (2026-09-29T13:00Z), so assert exact ids and counts: Checkout has 105 tickets, Maya (`DEMO_USER_ID`) is admin of Checkout, and Ravi (`VIEWER_USER_ID`) is a viewer.
 - Every new project-scoped route gets the access tests: a hidden project (`billing` for Maya) and an unknown one give the same 404 body; a viewer gets 403 on any change.
 - A mutation test also checks the activity event it writes (actor, from, to, `TEST_NOW`).
-- Web: React Testing Library, query by role, label or text. No snapshots.
+- Web: React Testing Library, query by role, label or text. No snapshots. Pages render with `renderPage()` from `apps/web/src/test/render.tsx`, with `api` methods stubbed by `vi.spyOn` and data from `test/fixtures.ts`.
 - e2e: one smoke test in `e2e/smoke.spec.ts`; add a step only for flows that cross API and UI.
 - Run one file with `npx vitest run <path>`, everything with `npm test`, and `npm run check` before handing off.

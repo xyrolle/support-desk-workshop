@@ -48,8 +48,9 @@ apps/api/src/
                          projects, members, users, labels, tickets, comments, activity, customers
   modules/reports/       LEGACY volume report (see below)
 apps/web/src/
-  api/                   client.ts (typed fetch), queries.ts (TanStack Query hooks)
-  features/<name>/       pages and components for one feature
+  api/                   client.ts (typed fetch), queries.ts and mutations.ts (TanStack Query hooks)
+  features/<name>/       pages and components for one feature: my-tickets, tickets (lists),
+                         ticket-detail, members, customers, projects
   components/            the app shell: Layout, Sidebar, SidebarSection, TopBar, Breadcrumbs, PageHeader, Panel, Pagination
   components/ui/         design-system primitives: Button, Select, Combobox, Menu, Dialog, Toast, Table, ... (popups on Base UI)
   dev/                   the UI kit page at /dev/ui, every primitive in one place (development only)

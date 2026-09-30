@@ -4,6 +4,8 @@ The ticket tracker of Brightcart's support team, and the starter project for the
 **Agentic Development in Cursor** course. During the day we build the features in
 [`docs/features`](docs/features) on top of it with Cursor's agent.
 
+![A ticket's conversation: customer messages, replies and internal notes](docs/screenshots/ticket-detail.png)
+
 ## Quick start
 
 ```bash
