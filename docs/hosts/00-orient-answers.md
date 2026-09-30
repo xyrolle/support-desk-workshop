@@ -78,7 +78,7 @@ the line is off by a few.
   (`reports.routes.ts`).
 - The deprecated `formatTicketRef()` (`lib/format-ticket-ref.ts`, used at
   `reports.service.ts:109`).
-- AGENTS.md says it (`AGENTS.md:76-83`), and `.cursor/rules/legacy-reports.mdc` is scoped
+- AGENTS.md says it (`AGENTS.md:80-87`), and `.cursor/rules/legacy-reports.mdc` is scoped
   to it.
 
 What goes wrong if a new report copies it: day and week boundaries in UTC instead of the
