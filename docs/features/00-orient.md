@@ -1,11 +1,23 @@
 # 00 · Orient in the codebase
 
-No code in this chapter. Before changing anything, find out how Support Desk really works.
-Use the agent in Ask mode, point it at files with @-mentions, and try an Explore subagent
-for the wide questions. For every answer, give the file and line where it happens and the
-exact behaviour, then prove it with the check.
+No code in this chapter. Before changing anything, find out what Support Desk is built
+with and how it really works. Use the agent in Ask mode, point it at files with @-mentions,
+and try an Explore subagent for the wide questions. For every answer, give the file and line
+where it happens and the exact behaviour, then prove it with the check.
 
-## The five quests
+## The quests
+
+Start with the map. Quests 1 to 5 ask what the app does, quests 6 to 8 how it is built.
+
+### 0. The map
+
+What is Support Desk built with, and how is it organised? Name the stack, each top-level
+folder and what it owns, and the path of one request from a page to the database, such as
+opening Checkout's ticket list.
+
+Check: `npm ls --depth=0 --workspaces` lists the three workspaces and the packages each one
+uses. Then open the files on your path in order: each one imports the next, except where the
+request leaves the browser (the Vite proxy in `apps/web/vite.config.ts`).
 
 ### 1. Who may change a ticket?
 
@@ -47,6 +59,36 @@ One module is written in an older style. Which one, how can you tell from the co
 what would go wrong if a new report copied it, and what should new code use instead?
 
 Check: the answer must name at least three concrete differences, each with a file and line.
+
+### 6. How do the web app and the API agree on a ticket?
+
+The web app and the API are separate programs. Where is a ticket's shape written down, and
+how does each side hold the other to it? What does the API answer to a PATCH with
+`{"status":"done"}`? What does the web app do with an answer that doesn't match: a field
+missing, or one it has never heard of?
+
+Check: `npx vitest run apps/api/src/modules/tickets/ticket-update.test.ts -t "rejects the body"`.
+
+### 7. Where does a test get its data and its clock?
+
+The tests expect exact ids and counts: Checkout has 105 tickets, and the newest is `CHK-205`.
+Where does a test's database come from, what time is it inside a test, and how does that time
+reach a service? What do `npm run dev` and `npm run db:seed` use instead, and why are the
+ticket ids the same on every copy?
+
+Check: `npx vitest run apps/api/src/db/seed.test.ts`, then
+`git grep -n "new Date()" -- apps/api/src ':!*.test.ts'` lists every place outside the tests
+that reads the real time.
+
+### 8. What does it take to add a field to a ticket?
+
+Every ticket gets a channel: email, chat or phone, shown in the list and on the ticket page.
+Don't build it. List every file you would change, in the order you would change them, and the
+commands that go with them. What fails, and where, if you skip the migration? And if you skip
+the shared schema?
+
+Check: `git grep -l -e firstRespondedAt -e first_responded_at -- apps packages` lists every
+file that mentions a field tickets already have. Your list should reach the same layers.
 
 ## Stretch
 
